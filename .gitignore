@@ -1,0 +1,9 @@
+
+config.mk
+
+*.o
+*.so
+*.sym
+*.tmp
+*.ver
+

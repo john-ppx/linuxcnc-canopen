@@ -9,7 +9,6 @@ clean:
 
 install: configure
 	@$(MAKE) -C src install
-	@$(MAKE) -C examples install-examples
 
 configure: config.mk
 
