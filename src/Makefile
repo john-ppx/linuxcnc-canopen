@@ -12,4 +12,5 @@ clean:
 	rm -f *.mod.c .*.cmd
 	rm -f modules.order Module.symvers
 	rm -rf .tmp_versions
+	@$(MAKE) -f user.mk clean
 

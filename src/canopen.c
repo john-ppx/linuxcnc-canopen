@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "rtapi.h"
 #ifdef RTAPI
 #include "rtapi_app.h"
@@ -7,7 +9,7 @@
 #include "hal.h"
 #include "rtapi_math64.h"
 
-#include "test.h"
+#include "CANopen.h"
 
 static int comp_id;
 
@@ -40,6 +42,18 @@ static int __comp_get_data_size(void);
 #define true (1)
 #undef false
 #define false (0)
+
+/* Helper functions ***********************************************************/
+void CO_errExit(char* msg) {
+    perror(msg);
+    hal_exit(comp_id);
+}
+
+/* send CANopen generic emergency message */
+void CO_error(const uint32_t info) {
+    CO_errorReport(CO->em, CO_EM_GENERIC_SOFTWARE_ERROR, CO_EMC_SOFTWARE_INTERNAL, info);
+    fprintf(stderr, "canopend generic error: 0x%X\n", info);
+}
 
 static int export(char *prefix, long extra_arg) {
     char buf[HAL_NAME_LEN + 1];
@@ -74,7 +88,10 @@ int rtapi_app_main(void) {
         rtapi_print_msg(RTAPI_MSG_ERR,"count= and names= are mutually exclusive\n");
         return -EINVAL;
     }
-    test_fun1();
+    CO_CANsetConfigurationMode(0);
+    if (CO_init(0, OD_CANNodeID, OD_CANBitRate) != CO_ERROR_NO)
+        rtapi_print_msg(RTAPI_MSG_ERR,"CANopen init Fail\n");
+
     if(!count && !names[0]) count = default_count;
     if(count) {
         for(i=0; i<count; i++) {
@@ -104,6 +121,7 @@ int rtapi_app_main(void) {
 }
 
 void rtapi_app_exit(void) {
+    CO_delete(0);
     hal_exit(comp_id);
 }
 
@@ -128,7 +146,6 @@ FUNCTION(_) {
 double tmp = in;
 out = (tmp - old) / (period * 1e-9);
 old = tmp;
-    test_fun1();
 }
 
 static int __comp_get_data_size(void) { return 0; }

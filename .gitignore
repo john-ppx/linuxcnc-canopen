@@ -6,4 +6,5 @@ config.mk
 *.sym
 *.tmp
 *.ver
+*.swp
 
