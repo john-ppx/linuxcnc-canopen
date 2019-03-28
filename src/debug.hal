@@ -1,0 +1,16 @@
+# components
+loadrt threads 
+#loadrt __thread1  (not loaded by loadrt, no args saved)
+loadrt canopen 
+# pin aliases
+# param aliases
+# signals
+# nets
+# parameter values
+setp canopen.read.tmax            0
+setp canopen.write.tmax            0
+setp thread1.tmax            0
+# realtime thread/function links
+addf canopen.read thread1
+addf canopen.write thread1
+start

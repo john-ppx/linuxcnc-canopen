@@ -275,23 +275,23 @@ bool_t CANrx_taskTmr_process(int fd) {
             CO_error(0x22300000L + errno);
 
 
-        /* Lock PDOs and OD */
-        CO_LOCK_OD();
+       // /* Lock PDOs and OD */
+       // CO_LOCK_OD();
 
-        if(CO->CANmodule[0]->CANnormal) {
-            bool_t syncWas;
+       // if(CO->CANmodule[0]->CANnormal) {
+       //     bool_t syncWas;
 
-            /* Process Sync and read inputs */
-            syncWas = CO_process_SYNC_RPDO(CO, taskRT.intervalus);
+       //     /* Process Sync and read inputs */
+       //     syncWas = CO_process_SYNC_RPDO(CO, taskRT.intervalus);
 
-            /* Further I/O or nonblocking application code may go here. */
+       //     /* Further I/O or nonblocking application code may go here. */
 
-            /* Write outputs */
-            CO_process_TPDO(CO, syncWas, taskRT.intervalus);
-        }
+       //     /* Write outputs */
+       //     CO_process_TPDO(CO, syncWas, taskRT.intervalus);
+       // }
 
-        /* Unlock */
-        CO_UNLOCK_OD();
+       // /* Unlock */
+       // CO_UNLOCK_OD();
     } else {
         wasProcessed = false;
     }

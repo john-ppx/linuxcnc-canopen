@@ -37,6 +37,9 @@ static void _write(void *inst, long period);
 static void* rt_thread(void* arg);
 static pthread_t            rt_thread_id;
 
+#define TMR_TASK_INTERVAL_NS    (1000000)       /* Interval of taskTmr in nanoseconds */
+#define TMR_TASK_OVERFLOW_US    (5000)          /* Overflow detect limit for taskTmr in microseconds */
+#define INCREMENT_1MS(var)      (var++)         /* Increment 1ms variable in taskTmr */
 #undef TRUE
 #define TRUE (1)
 #undef FALSE
@@ -96,11 +99,17 @@ volatile uint16_t           CO_timer1ms = 0U;
 //static int default_count=1, count=0;
 //char *names[16] = {0,};
 //RTAPI_MP_INT(count, "number of ddt");
-//RTAPI_MP_ARRAY_STRING(names, 16, "names of ddt");
+RTAPI_MP_STRING(odStorFile_rom, "file of rom data");
+RTAPI_MP_STRING(odStorFile_eeprom, "file of eeprom data");
 
 int rtapi_app_main(void) {
     int r = 0;
     int i;
+
+    char current_absolute_path[1000];
+    //获取当前目录绝对路径
+    getcwd(current_absolute_path, 1000);
+    rtapi_print_msg(RTAPI_MSG_ERR,"CANOPEN:pwd (%s)\n", current_absolute_path);
 
     comp_id = hal_init("canopen");
     if(comp_id < 0) {return comp_id;
@@ -168,6 +177,7 @@ void rtapi_app_exit(void) {
     CO_OD_storage_autoSave(&odStorAuto, 0, 0);
     CO_OD_storage_autoSaveClose(&odStorAuto);
 
+    CANrx_taskTmr_close();
     taskMain_close();
     CO_delete(0);
     hal_exit(comp_id);
@@ -188,21 +198,26 @@ void CO_error(const uint32_t info) {
 
 #undef FUNCTION
 #define FUNCTION(name) static void name(void *inst, long period)
-#undef fperiod
-#define fperiod (period * 1e-3)
 
 FUNCTION(_read) {
 struct __canopen_state *node = (struct __canopen_state*)inst;
+    static long old_period = 0;
+    static long period_ms = 0;
+    static long period_us = 0;
 
-    CO_timer1ms += period*1e-6;
+    if (old_period != period) {
+        old_period = period;
+        period_ms = period / 1000000;
+        period_us = period / 1000;
+    }
 
-    CO_CANrxWait(CO->CANmodule[0]);
+    CO_timer1ms += period_ms;
 
     CO_LOCK_OD();
 
     if(CO->CANmodule[0]->CANnormal) {
         /* Process Sync and read inputs */
-        node->syncWas = CO_process_SYNC_RPDO(CO, fperiod);
+        node->syncWas = CO_process_SYNC_RPDO(CO, period_us);
 
         /* Further I/O or nonblocking application code may go here. */
 
@@ -214,11 +229,19 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
 
 FUNCTION(_write) {
 struct __canopen_state *node = (struct __canopen_state*)inst;
+    static long old_period = 0;
+    static long period_us = 0;
+
+    if (old_period != period) {
+        old_period = period;
+        period_us = period / 1000;
+    }
+
 
     CO_LOCK_OD();
     if(CO->CANmodule[0]->CANnormal) {
         /* Write outputs */
-        CO_process_TPDO(CO, node->syncWas, fperiod);
+        CO_process_TPDO(CO, node->syncWas, period_us);
     }
 
     CO_UNLOCK_OD();
@@ -242,6 +265,14 @@ static void* rt_thread(void* arg) {
 
     /* Init mainline */
     taskMain_init(mainline_epoll_fd, &OD_performance[ODA_performance_mainCycleMaxTime]);
+
+    /* Init taskRT */
+    CANrx_taskTmr_init(mainline_epoll_fd, TMR_TASK_INTERVAL_NS, &OD_performance[ODA_performance_timerCycleMaxTime]);
+
+    OD_performance[ODA_performance_timerCycleTime] = TMR_TASK_INTERVAL_NS/1000; /* informative */
+
+
+    rtapi_print_msg(RTAPI_MSG_ERR, "(nodeId=0x%02X) - starting.\n\n", nodeId);
 
     /* Execute optional additional application code */
     app_programStart();
@@ -292,8 +323,15 @@ static void* rt_thread(void* arg) {
                 if(errno != EINTR) {
                     CO_error(0x11100000L + errno);
                 }
-            }
-            else if(taskMain_process(ev.data.fd, &reset, CO_timer1ms)) {
+            } else if(CANrx_taskTmr_process(ev.data.fd)) {
+                /* code was processed in the above function. Additional code process below */
+
+                /* Detect timer large overflow */
+                if(OD_performance[ODA_performance_timerCycleMaxTime] > TMR_TASK_OVERFLOW_US && rtPriority > 0) {
+                    CO_errorReport(CO->em, CO_EM_ISR_TIMER_OVERFLOW, CO_EMC_SOFTWARE_INTERNAL,
+                            0x22400000L | OD_performance[ODA_performance_timerCycleMaxTime]);
+                }
+            } else if(taskMain_process(ev.data.fd, &reset, CO_timer1ms)) {
                 uint16_t timer1msDiff;
                 static uint16_t tmr1msPrev = 0;
 
@@ -315,6 +353,8 @@ static void* rt_thread(void* arg) {
             }
         }
     }
+    
+    rtapi_print_msg(RTAPI_MSG_ERR, "(nodeId=0x%02X) - finished.\n\n", nodeId);
 }
 
 
