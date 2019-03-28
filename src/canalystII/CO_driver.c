@@ -27,6 +27,7 @@
 #include "CO_driver.h"
 #include "CO_Emergency.h"
 #include "controlcan.h"
+#include <stdio.h>
 #include <string.h> /* for memcpy */
 #include <stdlib.h> /* for malloc, free */
 #include <errno.h>

@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <signal.h>
+
+#include <sys/epoll.h>
 
 #include "rtapi.h"
 #ifdef RTAPI
@@ -7,33 +10,33 @@
 #include "rtapi_string.h"
 #include "rtapi_errno.h"
 #include "hal.h"
-#include "rtapi_math64.h"
 
 #include "CANopen.h"
+#include "CO_OD_storage.h"
+#include "CO_Linux_tasks.h"
+#include "application.h"
 
 static int comp_id;
 
-#ifdef MODULE_INFO
-MODULE_INFO(linuxcnc, "component:ddt:Compute the derivative of the input function");
-MODULE_INFO(linuxcnc, "pin:in:float:0:in::None:None");
-MODULE_INFO(linuxcnc, "pin:out:float:0:out::None:None");
-MODULE_INFO(linuxcnc, "funct:_:1:");
-MODULE_INFO(linuxcnc, "license:GPL");
-MODULE_LICENSE("GPL");
-#endif // MODULE_INFO
+struct __canopen_state {
+    hal_bit_t *spindle_enable;
+    hal_bit_t *spindle_dir;
+    hal_float_t *spindle_speed;
 
-
-struct __comp_state {
-    struct __comp_state *_next;
-    hal_float_t *in;
-    hal_float_t *out;
-    double old;
-
+    hal_float_t *xpos_cmd;
+    hal_float_t *ypos_cmd;
+    hal_float_t *zpos_cmd;
+            
+    bool_t syncWas;
 };
-struct __comp_state *__comp_first_inst=0, *__comp_last_inst=0;
 
-static void _(struct __comp_state *__comp_inst, long period);
-static int __comp_get_data_size(void);
+struct __canopen_state *canopen_inst = 0;
+
+static void _read(void *inst, long period);
+static void _write(void *inst, long period);
+static void* rt_thread(void* arg);
+static pthread_t            rt_thread_id;
+
 #undef TRUE
 #define TRUE (1)
 #undef FALSE
@@ -43,75 +46,111 @@ static int __comp_get_data_size(void);
 #undef false
 #define false (0)
 
-/* Helper functions ***********************************************************/
-void CO_errExit(char* msg) {
-    perror(msg);
-    hal_exit(comp_id);
-}
-
-/* send CANopen generic emergency message */
-void CO_error(const uint32_t info) {
-    CO_errorReport(CO->em, CO_EM_GENERIC_SOFTWARE_ERROR, CO_EMC_SOFTWARE_INTERNAL, info);
-    fprintf(stderr, "canopend generic error: 0x%X\n", info);
-}
-
-static int export(char *prefix, long extra_arg) {
+static int export(char *prefix) {
     char buf[HAL_NAME_LEN + 1];
     int r = 0;
-    int sz = sizeof(struct __comp_state) + __comp_get_data_size();
-    struct __comp_state *inst = hal_malloc(sz);
-    memset(inst, 0, sz);
-    r = hal_pin_float_newf(HAL_IN, &(inst->in), comp_id,
-        "%s.in", prefix);
+
+    canopen_inst = hal_malloc(sizeof(struct __canopen_state));
+    if (canopen_inst == 0)
+        return 1;
+
+    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->spindle_speed),
+            comp_id, "%s.spindle_rpm", prefix);
     if(r != 0) return r;
-    r = hal_pin_float_newf(HAL_OUT, &(inst->out), comp_id,
-        "%s.out", prefix);
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->spindle_enable),
+            comp_id, "%s.spindle_enable", prefix);
     if(r != 0) return r;
-    rtapi_snprintf(buf, sizeof(buf), "%s", prefix);
-    r = hal_export_funct(buf, (void(*)(void *inst, long))_, inst, 1, 0, comp_id);
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->spindle_dir),
+            comp_id, "%s.spindle_dir", prefix);
     if(r != 0) return r;
-    if(__comp_last_inst) __comp_last_inst->_next = inst;
-    __comp_last_inst = inst;
-    if(!__comp_first_inst) __comp_first_inst = inst;
+
+    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->xpos_cmd),
+            comp_id, "%s.xpos-cmd", prefix);
+    if(r != 0) return r;
+    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->ypos_cmd),
+            comp_id, "%s.ypos-cmd", prefix);
+    if(r != 0) return r;
+    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->zpos_cmd),
+            comp_id, "%s.zpos-cmd", prefix);
+    if(r != 0) return r;
+
+    rtapi_snprintf(buf, sizeof(buf), "%s.read", prefix);
+    r = hal_export_funct(buf, _read, canopen_inst, 1, 0, comp_id);
+    if(r != 0) return r;
+    rtapi_snprintf(buf, sizeof(buf), "%s.write", prefix);
+    r = hal_export_funct(buf, _write, canopen_inst, 1, 0, comp_id);
+    if(r != 0) return r;
+
     return 0;
 }
-static int default_count=1, count=0;
-char *names[16] = {0,};
-RTAPI_MP_INT(count, "number of ddt");
-RTAPI_MP_ARRAY_STRING(names, 16, "names of ddt");
+
+static int rtPriority = -1;    /* Real time priority, configurable by arguments. (-1=RT disabled) */
+static int mainline_epoll_fd;  /* epoll file descriptor for mainline */
+static CO_OD_storage_t      odStor;             /* Object Dictionary storage object for CO_OD_ROM */
+static CO_OD_storage_t      odStorAuto;         /* Object Dictionary storage object for CO_OD_EEPROM */
+static char                *odStorFile_rom    = "od_storage";       /* Name of the file */
+static char                *odStorFile_eeprom = "od_storage_auto";  /* Name of the file */
+static int nodeId = -1;                /* Use value from Object Dictionary or set to 1..127 by arguments */
+volatile sig_atomic_t CO_endProgram = 0;
+volatile uint16_t           CO_timer1ms = 0U;
+//static int default_count=1, count=0;
+//char *names[16] = {0,};
+//RTAPI_MP_INT(count, "number of ddt");
+//RTAPI_MP_ARRAY_STRING(names, 16, "names of ddt");
+
 int rtapi_app_main(void) {
     int r = 0;
     int i;
-    comp_id = hal_init("canopen");
-    if(comp_id < 0) return comp_id;
-    if(count && names[0]) {
-        rtapi_print_msg(RTAPI_MSG_ERR,"count= and names= are mutually exclusive\n");
-        return -EINVAL;
-    }
-    CO_CANsetConfigurationMode(0);
-    if (CO_init(0, OD_CANNodeID, OD_CANBitRate) != CO_ERROR_NO)
-        rtapi_print_msg(RTAPI_MSG_ERR,"CANopen init Fail\n");
 
-    if(!count && !names[0]) count = default_count;
-    if(count) {
-        for(i=0; i<count; i++) {
-            char buf[HAL_NAME_LEN + 1];
-            rtapi_snprintf(buf, sizeof(buf), "ddt.%d", i);
-            r = export(buf, i);
-            if(r != 0) break;
-       }
-    } else {
-        int max_names = sizeof(names)/sizeof(names[0]);
-        for(i=0; (i < max_names) && names[i]; i++) {
-            if (strlen(names[i]) < 1) {
-                rtapi_print_msg(RTAPI_MSG_ERR, "names[%d] is invalid (empty string)\n", i);
-                r = -EINVAL;
-                break;
-            }
-            r = export(names[i], i);
-            if(r != 0) break;
-       }
+    comp_id = hal_init("canopen");
+    if(comp_id < 0) {return comp_id;
+        rtapi_print_msg(RTAPI_MSG_ERR,"CANOPEN:Init Fail\n");
+        return comp_id;
     }
+
+    r = export("canopen");
+    if (r)
+        goto APP_EXIT;
+
+    if (nodeId == -1)
+        nodeId = OD_CANNodeID;
+
+    if(nodeId < 1 || nodeId > 127) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: Wrong node ID (%d)\n", nodeId);
+        r = -EINVAL;goto APP_EXIT;
+    }
+    /* Verify, if OD structures have proper alignment of initial values */
+    if(CO_OD_RAM.FirstWord != CO_OD_RAM.LastWord) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "Program init Error in CO_OD_RAM.\n");
+        r = -EINVAL;goto APP_EXIT;
+    }
+    if(CO_OD_EEPROM.FirstWord != CO_OD_EEPROM.LastWord) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "Program init Error in CO_OD_EEPROM.\n");
+        r = -EINVAL;goto APP_EXIT;
+    }
+    if(CO_OD_ROM.FirstWord != CO_OD_ROM.LastWord) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "Program init Error in CO_OD_ROM.\n");
+        r = -EINVAL;goto APP_EXIT;
+    }
+
+    /* Create rt_thread */
+    if(pthread_create(&rt_thread_id, NULL, rt_thread, NULL) != 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "Program init - rt_thread creation failed");
+        r = -EINVAL;goto APP_EXIT;
+    }
+
+    /* Set priority for rt_thread */
+    if(rtPriority > 0) {
+        struct sched_param param;
+
+        param.sched_priority = rtPriority;
+        if(pthread_setschedparam(rt_thread_id, SCHED_FIFO, &param) != 0) {
+            rtapi_print_msg(RTAPI_MSG_ERR, "Program init - rt_thread set scheduler failed");
+            r = -EINVAL;goto APP_EXIT;
+        }
+    }
+
+APP_EXIT:
     if(r) {
         hal_exit(comp_id);
     } else {
@@ -121,31 +160,161 @@ int rtapi_app_main(void) {
 }
 
 void rtapi_app_exit(void) {
+    CO_endProgram = 1;
+
+    pthread_join(rt_thread_id, NULL);
+
+    /* Store CO_OD_EEPROM */
+    CO_OD_storage_autoSave(&odStorAuto, 0, 0);
+    CO_OD_storage_autoSaveClose(&odStorAuto);
+
+    taskMain_close();
     CO_delete(0);
     hal_exit(comp_id);
 }
 
-#undef FUNCTION
-#define FUNCTION(name) static void name(struct __comp_state *__comp_inst, long period)
-#undef EXTRA_SETUP
-#define EXTRA_SETUP() static int extra_setup(struct __comp_state *__comp_inst, char *prefix, long extra_arg)
-#undef EXTRA_CLEANUP
-#define EXTRA_CLEANUP() static void extra_cleanup(void)
-#undef fperiod
-#define fperiod (period * 1e-9)
-#undef in
-#define in (0+*__comp_inst->in)
-#undef out
-#define out (*__comp_inst->out)
-#undef old
-#define old (__comp_inst->old)
-
-
-FUNCTION(_) {
-#line 27 "ddt.comp"
-double tmp = in;
-out = (tmp - old) / (period * 1e-9);
-old = tmp;
+/* Helper functions ***********************************************************/
+void CO_errExit(char* msg) {
+    perror(msg);
+    rtapi_app_exit();
 }
 
-static int __comp_get_data_size(void) { return 0; }
+/* send CANopen generic emergency message */
+void CO_error(const uint32_t info) {
+    CO_errorReport(CO->em, CO_EM_GENERIC_SOFTWARE_ERROR, CO_EMC_SOFTWARE_INTERNAL, info);
+    rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: generic error: 0x%X\n", info);
+}
+
+
+#undef FUNCTION
+#define FUNCTION(name) static void name(void *inst, long period)
+#undef fperiod
+#define fperiod (period * 1e-3)
+
+FUNCTION(_read) {
+struct __canopen_state *node = (struct __canopen_state*)inst;
+
+    CO_timer1ms += period*1e-6;
+
+    CO_CANrxWait(CO->CANmodule[0]);
+
+    CO_LOCK_OD();
+
+    if(CO->CANmodule[0]->CANnormal) {
+        /* Process Sync and read inputs */
+        node->syncWas = CO_process_SYNC_RPDO(CO, fperiod);
+
+        /* Further I/O or nonblocking application code may go here. */
+
+    }
+
+    /* Unlock */
+    CO_UNLOCK_OD();
+}
+
+FUNCTION(_write) {
+struct __canopen_state *node = (struct __canopen_state*)inst;
+
+    CO_LOCK_OD();
+    if(CO->CANmodule[0]->CANnormal) {
+        /* Write outputs */
+        CO_process_TPDO(CO, node->syncWas, fperiod);
+    }
+
+    CO_UNLOCK_OD();
+}
+
+static void* rt_thread(void* arg) {
+    CO_NMT_reset_cmd_t reset = CO_RESET_NOT;
+    CO_ReturnError_t odStorStatus_rom, odStorStatus_eeprom;
+
+       /* initialize Object Dictionary storage */
+    odStorStatus_rom = CO_OD_storage_init(&odStor, (uint8_t*) &CO_OD_ROM, sizeof(CO_OD_ROM), odStorFile_rom);
+    odStorStatus_eeprom = CO_OD_storage_init(&odStorAuto, (uint8_t*) &CO_OD_EEPROM, sizeof(CO_OD_EEPROM), odStorFile_eeprom);
+
+    /* increase variable each startup. Variable is automatically stored in non-volatile memory. */
+    OD_powerOnCounter++;
+
+    /* Configure epoll for mainline */
+    mainline_epoll_fd = epoll_create(4);
+    if(mainline_epoll_fd == -1)
+        CO_errExit("Program init - epoll_create mainline failed");
+
+    /* Init mainline */
+    taskMain_init(mainline_epoll_fd, &OD_performance[ODA_performance_mainCycleMaxTime]);
+
+    /* Execute optional additional application code */
+    app_programStart();
+
+    while(reset != CO_RESET_APP && reset != CO_RESET_QUIT && CO_endProgram == 0) {
+        CO_ReturnError_t err;
+        /* Enter CAN configuration. */
+        CO_CANsetConfigurationMode(0);
+
+        err = CO_init(0, nodeId, OD_CANBitRate);
+        if(err != CO_ERROR_NO) {
+            char s[120];
+            snprintf(s, 120, "Communication reset - CANopen initialization failed, err=%d", err);
+            CO_errExit(s);
+        }
+
+        /* initialize OD objects 1010 and 1011 and verify errors. */
+        CO_OD_configure(CO->SDO[0], OD_H1010_STORE_PARAM_FUNC, CO_ODF_1010, (void*)&odStor, 0, 0U);
+        CO_OD_configure(CO->SDO[0], OD_H1011_REST_PARAM_FUNC, CO_ODF_1011, (void*)&odStor, 0, 0U);
+        if(odStorStatus_rom != CO_ERROR_NO) {
+            CO_errorReport(CO->em, CO_EM_NON_VOLATILE_MEMORY, CO_EMC_HARDWARE, (uint32_t)odStorStatus_rom);
+        }
+        if(odStorStatus_eeprom != CO_ERROR_NO) {
+            CO_errorReport(CO->em, CO_EM_NON_VOLATILE_MEMORY, CO_EMC_HARDWARE, (uint32_t)odStorStatus_eeprom + 1000);
+        }
+
+        /* Configure callback functions for task control */
+        CO_EM_initCallback(CO->em, taskMain_cbSignal);
+        CO_SDO_initCallback(CO->SDO[0], taskMain_cbSignal);
+        CO_SDOclient_initCallback(CO->SDOclient, taskMain_cbSignal);
+
+        /* Execute optional additional application code */
+        app_communicationReset();
+
+        /* start CAN */
+        CO_CANsetNormalMode(CO->CANmodule[0]);
+
+        reset = CO_RESET_NOT;
+
+        while(reset == CO_RESET_NOT && CO_endProgram == 0) {
+        /* loop for normal program execution ******************************************/
+            int ready;
+            struct epoll_event ev;
+
+            ready = epoll_wait(mainline_epoll_fd, &ev, 1, -1);
+            
+            if(ready != 1) {
+                if(errno != EINTR) {
+                    CO_error(0x11100000L + errno);
+                }
+            }
+            else if(taskMain_process(ev.data.fd, &reset, CO_timer1ms)) {
+                uint16_t timer1msDiff;
+                static uint16_t tmr1msPrev = 0;
+
+                /* Calculate time difference */
+                timer1msDiff = CO_timer1ms - tmr1msPrev;
+                tmr1msPrev = CO_timer1ms;
+
+                /* code was processed in the above function. Additional code process below */
+
+                /* Execute optional additional application code */
+                app_programAsync(timer1msDiff);
+
+                CO_OD_storage_autoSave(&odStorAuto, CO_timer1ms, 60000);
+            }
+
+            else {
+                /* No file descriptor was processed. */
+                CO_error(0x11200000L);
+            }
+        }
+    }
+}
+
+
