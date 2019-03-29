@@ -106,11 +106,6 @@ int rtapi_app_main(void) {
     int r = 0;
     int i;
 
-    char current_absolute_path[1000];
-    //获取当前目录绝对路径
-    getcwd(current_absolute_path, 1000);
-    rtapi_print_msg(RTAPI_MSG_ERR,"CANOPEN:pwd (%s)\n", current_absolute_path);
-
     comp_id = hal_init("canopen");
     if(comp_id < 0) {return comp_id;
         rtapi_print_msg(RTAPI_MSG_ERR,"CANOPEN:Init Fail\n");
@@ -240,6 +235,23 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
 
     CO_LOCK_OD();
     if(CO->CANmodule[0]->CANnormal) {
+        if (*(node->spindle_enable)) {
+            OD_readInput8Bit[0] |= 0x01; 
+        } else {
+            OD_readInput8Bit[0] &=~0x01; 
+        }
+
+        if (*(node->spindle_dir)) {
+            OD_readInput8Bit[0] |= 0x02; 
+        } else {
+            OD_readInput8Bit[0] &=~0x02; 
+        }
+
+        OD_spindleRpm = *(node->spindle_speed);
+        OD_XPositionCmd = *(node->xpos_cmd);
+        OD_YPositionCmd = *(node->ypos_cmd);
+        OD_ZPositionCmd = *(node->zpos_cmd);
+
         /* Write outputs */
         CO_process_TPDO(CO, node->syncWas, period_us);
     }
