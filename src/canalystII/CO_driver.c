@@ -181,6 +181,14 @@ CO_ReturnError_t CO_CANmodule_init(
                     ret = CO_ERROR_ILLEGAL_ARGUMENT;
                 }
             }
+
+            /*
+             *  can节点没有接通时，发送超时，造成设备出问题
+             * 在硬件上把can1与can2连在一起，再与外部节点连接，
+             * 保证设备正常运行
+             */
+            VCI_InitCAN(DRIVER_DEVICE_TYPE, 0, 1, &config);
+            VCI_StartCAN(DRIVER_DEVICE_TYPE, 0, 1);
         }
     }
 
@@ -191,6 +199,7 @@ CO_ReturnError_t CO_CANmodule_init(
 /******************************************************************************/
 void CO_CANmodule_disable(CO_CANmodule_t *CANmodule){
     VCI_ResetCAN(DRIVER_DEVICE_TYPE, 0, CANmodule->CANbaseAddress);//复位CAN1通道。
+    VCI_ResetCAN(DRIVER_DEVICE_TYPE, 0, 1);//复位CAN2通道。
     VCI_CloseDevice(DRIVER_DEVICE_TYPE, 0);//关闭设备。
 }
 
@@ -280,7 +289,7 @@ CO_CANtx_t *CO_CANtxBufferInit(
 /******************************************************************************/
 CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     CO_ReturnError_t err = CO_ERROR_NO;
-    ssize_t n;
+    ssize_t n = 1;
 
     n = VCI_Transmit(DRIVER_DEVICE_TYPE, 0, CANmodule->CANbaseAddress, (PVCI_CAN_OBJ)buffer, 1);
 #ifdef CO_LOG_CAN_MESSAGES

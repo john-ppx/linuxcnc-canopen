@@ -106,6 +106,10 @@ int rtapi_app_main(void) {
     int r = 0;
     int i;
 
+    //char buffer[100];
+    //getcwd(buffer,100);
+    //printf("The current directoryis:%s\n",buffer);
+
     comp_id = hal_init("canopen");
     if(comp_id < 0) {return comp_id;
         rtapi_print_msg(RTAPI_MSG_ERR,"CANOPEN:Init Fail\n");
