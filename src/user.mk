@@ -30,6 +30,9 @@ SOURCES =       $(STACKDRV_SRC)/CO_driver.c         \
                 $(STACK_SRC)/CO_trace.c             \
                 $(CANOPEN_SRC)/CANopen.c            \
                 canopen.c                           \
+                CO_master.c                         \
+                CO_command.c                        \
+                CO_comm_helpers.c                   \
                 $(OBJ_DICT_SRC)/CO_OD.c             \
                 $(APP_SRC)/application.c
 

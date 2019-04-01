@@ -1,0 +1,5 @@
+# 这些文件按照它们出现的顺序在GUI启动后加载
+# Tue Dec 11 16:23:03 2018 由 stepconf1.1 生成
+# 如果您对此文件进行了更改，那么
+# 当您再次运行stepconf时，它们将被覆盖
+sets spindle-at-speed true

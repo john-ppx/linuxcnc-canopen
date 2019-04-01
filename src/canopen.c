@@ -16,6 +16,8 @@
 #include "CO_Linux_tasks.h"
 #include "application.h"
 
+#include "CO_command.h"
+
 static int comp_id;
 
 struct __canopen_state {
@@ -36,6 +38,8 @@ static void _read(void *inst, long period);
 static void _write(void *inst, long period);
 static void* rt_thread(void* arg);
 static pthread_t            rt_thread_id;
+
+pthread_mutex_t             CO_CAN_VALID_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 #define TMR_TASK_INTERVAL_NS    (1000000)       /* Interval of taskTmr in nanoseconds */
 #define TMR_TASK_OVERFLOW_US    (5000)          /* Overflow detect limit for taskTmr in microseconds */
@@ -170,6 +174,8 @@ APP_EXIT:
 void rtapi_app_exit(void) {
     CO_endProgram = 1;
 
+    CO_command_clear();
+
     pthread_join(rt_thread_id, NULL);
 
     /* Store CO_OD_EEPROM */
@@ -266,6 +272,7 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
 static void* rt_thread(void* arg) {
     CO_NMT_reset_cmd_t reset = CO_RESET_NOT;
     CO_ReturnError_t odStorStatus_rom, odStorStatus_eeprom;
+    bool_t firstRun = true;
 
        /* initialize Object Dictionary storage */
     odStorStatus_rom = CO_OD_storage_init(&odStor, (uint8_t*) &CO_OD_ROM, sizeof(CO_OD_ROM), odStorFile_rom);
@@ -274,27 +281,11 @@ static void* rt_thread(void* arg) {
     /* increase variable each startup. Variable is automatically stored in non-volatile memory. */
     OD_powerOnCounter++;
 
-    /* Configure epoll for mainline */
-    mainline_epoll_fd = epoll_create(4);
-    if(mainline_epoll_fd == -1)
-        CO_errExit("Program init - epoll_create mainline failed");
-
-    /* Init mainline */
-    taskMain_init(mainline_epoll_fd, &OD_performance[ODA_performance_mainCycleMaxTime]);
-
-    /* Init taskRT */
-    CANrx_taskTmr_init(mainline_epoll_fd, TMR_TASK_INTERVAL_NS, &OD_performance[ODA_performance_timerCycleMaxTime]);
-
-    OD_performance[ODA_performance_timerCycleTime] = TMR_TASK_INTERVAL_NS/1000; /* informative */
-
-
-    rtapi_print_msg(RTAPI_MSG_ERR, "(nodeId=0x%02X) - starting.\n\n", nodeId);
-
-    /* Execute optional additional application code */
-    app_programStart();
-
     while(reset != CO_RESET_APP && reset != CO_RESET_QUIT && CO_endProgram == 0) {
         CO_ReturnError_t err;
+
+        pthread_mutex_lock(&CO_CAN_VALID_mtx);
+
         /* Enter CAN configuration. */
         CO_CANsetConfigurationMode(0);
 
@@ -320,11 +311,38 @@ static void* rt_thread(void* arg) {
         CO_SDO_initCallback(CO->SDO[0], taskMain_cbSignal);
         CO_SDOclient_initCallback(CO->SDOclient, taskMain_cbSignal);
 
+        if(firstRun) {
+            firstRun = false;
+            /* Configure epoll for mainline */
+            mainline_epoll_fd = epoll_create(4);
+            if(mainline_epoll_fd == -1)
+                CO_errExit("Program init - epoll_create mainline failed");
+
+            /* Init mainline */
+            taskMain_init(mainline_epoll_fd, &OD_performance[ODA_performance_mainCycleMaxTime]);
+
+            /* Init taskRT */
+            CANrx_taskTmr_init(mainline_epoll_fd, TMR_TASK_INTERVAL_NS, &OD_performance[ODA_performance_timerCycleMaxTime]);
+
+            OD_performance[ODA_performance_timerCycleTime] = TMR_TASK_INTERVAL_NS/1000; /* informative */
+
+
+            rtapi_print_msg(RTAPI_MSG_ERR, "(nodeId=0x%02X) - starting.\n\n", nodeId);
+
+            if(CO_command_init() != 0) {
+                CO_errExit("Socket command interface initialization failed");
+            }
+
+            /* Execute optional additional application code */
+            app_programStart();
+        }
+
         /* Execute optional additional application code */
         app_communicationReset();
 
         /* start CAN */
         CO_CANsetNormalMode(CO->CANmodule[0]);
+        pthread_mutex_unlock(&CO_CAN_VALID_mtx);
 
         reset = CO_RESET_NOT;
 
