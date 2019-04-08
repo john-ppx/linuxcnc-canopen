@@ -275,7 +275,7 @@ CO_CANtx_t *CO_CANtxBufferInit(
         buffer->bufferFull = false;
         buffer->syncFlag = syncFlag;
 
-        buffer->SendType = 0;
+        buffer->SendType = 1;
         buffer->ExternFlag = 0;//是否是扩展帧
 
         buffer->TimeStamp = 0;

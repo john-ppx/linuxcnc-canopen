@@ -151,6 +151,7 @@ int rtapi_app_main(void) {
         r = -EINVAL;goto APP_EXIT;
     }
 
+    rtPriority = 10;
     /* Set priority for rt_thread */
     if(rtPriority > 0) {
         struct sched_param param;

@@ -82,6 +82,8 @@ int CO_command_init(void) {
 
     memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
+
+    remove(CO_command_socketPath);
     strncpy(addr.sun_path, CO_command_socketPath, sizeof(addr.sun_path) - 1);
 
     if(bind(fdSocket, (struct sockaddr *) &addr, sizeof(struct sockaddr_un)) == -1) {

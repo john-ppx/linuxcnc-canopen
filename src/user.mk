@@ -53,7 +53,7 @@ $(TARGET): $(CANOPEN_OBJS) $(STACKDRV_SRC)/libcontrolcan.a
 	$(Q)ld -d -r -o $*.tmp $^
 	$(Q)objcopy -j .rtapi_export -O binary $*.tmp $*.sym
 	$(Q)(echo '{ global : '; tr -s '\0' < $*.sym | xargs -r0 printf '%s;\n' | grep .; echo 'local : * ; };') > $*.ver
-	$(Q)$(CC) -shared -Bsymbolic $(LDFLAGS) -Wl,--version-script,$*.ver -o $@ $^ -lm -lrt -pthread -lusb
+	$(Q)$(CC) -shared -Bsymbolic $(LDFLAGS) -Wl,--version-script,$*.ver -o $@ $^ -lm -lusb
 
 clean:
 	rm -f $(CANOPEN_OBJS)
