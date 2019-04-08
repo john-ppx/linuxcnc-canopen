@@ -1,10 +1,14 @@
+
+#DRIVER := ./driver/canalystII
+DRIVER := ./driver/tcp_driver
+
 .PHONY: all install clean
 
 all:
-	@$(MAKE) -f user.mk all
+	@$(MAKE) -f $(DRIVER)/user.mk all
 
 install:
-	@$(MAKE) -f user.mk install
+	@$(MAKE) -f $(DRIVER)/user.mk install
 
 clean:
 	rm -f *.so *.ko *.o
@@ -12,5 +16,5 @@ clean:
 	rm -f *.mod.c .*.cmd
 	rm -f modules.order Module.symvers
 	rm -rf .tmp_versions
-	@$(MAKE) -f user.mk clean
+	@$(MAKE) -f $(DRIVER)/user.mk clean
 

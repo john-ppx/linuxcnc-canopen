@@ -4,7 +4,7 @@ MOD_NAME := canopen
 
 TARGET := $(MOD_NAME).so
 
-STACKDRV_SRC =  ./canalystII
+STACKDRV_SRC =  ./driver/canalystII
 STACK_SRC =     ../CANopenNode/stack
 CANOPEN_SRC =   ../CANopenNode
 OBJ_DICT_SRC =  ./objDict
