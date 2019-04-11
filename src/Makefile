@@ -1,6 +1,7 @@
 
 #DRIVER := ./driver/canalystII
-DRIVER := ./driver/tcp_driver
+#DRIVER := ./driver/tcp_driver
+DRIVER := ./driver/udp_driver
 
 .PHONY: all install clean
 

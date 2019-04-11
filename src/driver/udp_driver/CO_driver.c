@@ -33,7 +33,6 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
 //#define SERVER_ADDR   "127.0.0.1"
 #define SERVER_ADDR   "192.168.89.48"
@@ -119,30 +118,18 @@ CO_ReturnError_t CO_CANmodule_init(
     if(ret == CO_ERROR_NO && CANmodule->wasConfigured == 0){
         CANmodule->wasConfigured = 1;
 
-        CANmodule->sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        CANmodule->sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if(CANmodule->sockfd == -1) {
             perror("socket failed");
             return CO_ERROR_ILLEGAL_ARGUMENT;
         }
         
         /*2 准备通信地址*/
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
+        CANmodule->addr.sin_family = AF_INET;
         /*设置为服务器进程的端口号*/
-        addr.sin_port = htons(SERVER_PORT);
+        CANmodule->addr.sin_port = htons(SERVER_PORT);
         /*服务器所在主机IP地址*/
-        inet_aton(SERVER_ADDR, &addr.sin_addr);
-
-        /*3 连接服务器*/
-        int res = connect(CANmodule->sockfd, (struct sockaddr *)&addr, sizeof(addr));
-        if(res == -1) {
-            perror("connect failed");
-            close(CANmodule->sockfd);
-            return CO_ERROR_ILLEGAL_ARGUMENT;
-        }
-
-        int flags = fcntl(CANmodule->sockfd, F_GETFL, 0);
-        fcntl(CANmodule->sockfd, F_SETFL, flags | O_NONBLOCK);
+        inet_aton(SERVER_ADDR, &CANmodule->addr.sin_addr);
     }
 
     return ret;
@@ -239,6 +226,7 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     CO_ReturnError_t err = CO_ERROR_NO;
     char s[1024];        
     int len, n = 0, res;
+    static int id = 0;
 
     if(!CANmodule->CANnormal || CANmodule->sockfd == -1)
         return CO_ERROR_DISCONNECT;
@@ -257,18 +245,10 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
             buffer->data[7]
             );
 
-    do {
-        res = send(CANmodule->sockfd, s+n, len-n, 0);
+    n = sendto(CANmodule->sockfd, s, len, 0,
+            (struct sockaddr *)&CANmodule->addr,
+            sizeof(CANmodule->addr));
 
-        if (res == -1){
-            if(errno == EAGAIN)
-                continue;
-            else
-                break;
-        }
-
-        n += res;
-    }while(n != len);
 #ifdef CO_LOG_CAN_MESSAGES
     void CO_logMessage(const CanMsg *msg);
     CO_logMessage((const CanMsg*) buffer);
@@ -356,38 +336,18 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule){
 static int recvMsg(CO_CANmodule_t *CANmodule, CO_CANrxMsg_t *msg) {
     static char s[1024];        
     static int n = 0;
-    int done = 0;
+    int done = 0, len;
     int ret = CO_ERROR_NO;
 
-    while (1) {
-        char r;
-
-        switch(recv(CANmodule->sockfd, &r, 1, 0)) {
-            case 0: // not connected anymore;
-                // ... but last line sent
-                // might not end in \n,
-                // so return ret anyway.
-                //return ret;
-                close(CANmodule->sockfd);
-                CANmodule->sockfd = -1;
-                CO_error(CO_ERROR_DISCONNECT);
-                ret = CO_ERROR_DISCONNECT;
-                n = 0;
-                done = 1;
-                break;
-            case -1:
-                if (errno == EAGAIN) {
-                  //return ret;
-                  return CO_ERROR_TIMEOUT;
-                } else {
-                    // not connected anymore
-                    n = 0;
-                    return CO_ERROR_TIMEOUT;
-                }
-        }
-
-        if (r == '\n' || done == 1)  break;
-        s[n++] = r;
+    len = sizeof(CANmodule->addr);
+    done = recvfrom(CANmodule->sockfd, &s, 1024, MSG_DONTWAIT,
+                (struct sockaddr *) &CANmodule->addr,
+                &len);
+    switch(done) {
+        case 0:
+            return CO_ERROR_TIMEOUT;
+        case -1:
+            return CO_ERROR_TIMEOUT;
     }
 
     n = 0;
