@@ -130,6 +130,16 @@ CO_ReturnError_t CO_CANmodule_init(
         CANmodule->addr.sin_port = htons(SERVER_PORT);
         /*服务器所在主机IP地址*/
         inet_aton(SERVER_ADDR, &CANmodule->addr.sin_addr);
+
+        if (connect(CANmodule->sockfd, (struct sockaddr *)&CANmodule->addr,
+            sizeof(CANmodule->addr)) == -1) {
+            perror("connect failed");
+            close(CANmodule->sockfd);
+            return CO_ERROR_ILLEGAL_ARGUMENT;
+        }
+
+        int flags = fcntl(CANmodule->sockfd, F_GETFL, 0);
+        fcntl(CANmodule->sockfd, F_SETFL, flags | O_NONBLOCK);
     }
 
     return ret;
@@ -226,14 +236,15 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     CO_ReturnError_t err = CO_ERROR_NO;
     char s[1024];        
     int len, n = 0, res;
-    static int id = 0;
+    static int id = 1;
 
     if(!CANmodule->CANnormal || CANmodule->sockfd == -1)
         return CO_ERROR_DISCONNECT;
 
     len = snprintf(s, 1024, "0x%3.3x,%1d,%1d,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x\n",
             buffer->ident,
-            buffer->RemoteFlag,
+            //buffer->RemoteFlag,
+            id++,
             buffer->DLC,
             buffer->data[0],
             buffer->data[1],
@@ -245,15 +256,17 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
             buffer->data[7]
             );
 
-    n = sendto(CANmodule->sockfd, s, len, 0,
-            (struct sockaddr *)&CANmodule->addr,
-            sizeof(CANmodule->addr));
+    n = send(CANmodule->sockfd, s, len, 0);
+    //n = sendto(CANmodule->sockfd, s, len, 0,
+    //        (struct sockaddr *)&CANmodule->addr,
+    //        sizeof(CANmodule->addr));
 
 #ifdef CO_LOG_CAN_MESSAGES
     void CO_logMessage(const CanMsg *msg);
     CO_logMessage((const CanMsg*) buffer);
 #endif
 
+    //printf("%d %s",n, s);
     if(n != len){
         printf("send %d %d %d\n", n, len, errno);
         CO_errorReport((CO_EM_t*)CANmodule->em, CO_EM_CAN_TX_OVERFLOW, CO_EMC_CAN_OVERRUN, n);
@@ -335,22 +348,13 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule){
 
 static int recvMsg(CO_CANmodule_t *CANmodule, CO_CANrxMsg_t *msg) {
     static char s[1024];        
-    static int n = 0;
-    int done = 0, len;
+    int len;
     int ret = CO_ERROR_NO;
 
-    len = sizeof(CANmodule->addr);
-    done = recvfrom(CANmodule->sockfd, &s, 1024, MSG_DONTWAIT,
-                (struct sockaddr *) &CANmodule->addr,
-                &len);
-    switch(done) {
-        case 0:
-            return CO_ERROR_TIMEOUT;
-        case -1:
-            return CO_ERROR_TIMEOUT;
+    if ((len = recv(CANmodule->sockfd, s, 100, 0)) <=0 ) {
+        return CO_ERROR_TIMEOUT;
     }
 
-    n = 0;
     int res = sscanf(s,
             "0x%3x,%1hhd,%1hhd,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx",
             &msg->ident,
