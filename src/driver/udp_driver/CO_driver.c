@@ -236,25 +236,21 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     CO_ReturnError_t err = CO_ERROR_NO;
     char s[1024];        
     int len, n = 0, res;
-    static int id = 1;
+    static int id = 0;
 
     if(!CANmodule->CANnormal || CANmodule->sockfd == -1)
         return CO_ERROR_DISCONNECT;
 
-    len = snprintf(s, 1024, "0x%3.3x,%1d,%1d,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x,0x%2.2x\n",
-            buffer->ident,
-            //buffer->RemoteFlag,
-            id++,
-            buffer->DLC,
-            buffer->data[0],
-            buffer->data[1],
-            buffer->data[2],
-            buffer->data[3],
-            buffer->data[4],
-            buffer->data[5],
-            buffer->data[6],
-            buffer->data[7]
-            );
+    id++;
+    res = htonl(id);
+    memcpy(s, &res, 4);
+    res = htonl(buffer->ident);
+    memcpy(s+4, &res, 4);
+    *(s+8) = buffer->RemoteFlag;
+    *(s+9) = buffer->DLC;
+    for (int i = 0; i < 8; i++)
+        *(s+10+i) = buffer->data[i];
+    len = 17;
 
     n = send(CANmodule->sockfd, s, len, 0);
     //n = sendto(CANmodule->sockfd, s, len, 0,
@@ -348,28 +344,27 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule){
 
 static int recvMsg(CO_CANmodule_t *CANmodule, CO_CANrxMsg_t *msg) {
     static char s[1024];        
-    int len;
+    static int n = 0, total = 0;
+    int num;
     int ret = CO_ERROR_NO;
 
-    if ((len = recv(CANmodule->sockfd, s, 100, 0)) <=0 ) {
+    if (recv(CANmodule->sockfd, s, 100, 0) <=0 ) {
         return CO_ERROR_TIMEOUT;
     }
 
-    int res = sscanf(s,
-            "0x%3x,%1hhd,%1hhd,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx,0x%2hhx",
-            &msg->ident,
-            &msg->RemoteFlag,
-            &msg->DLC,
-            &msg->data[0],
-            &msg->data[1],
-            &msg->data[2],
-            &msg->data[3],
-            &msg->data[4],
-            &msg->data[5],
-            &msg->data[6],
-            &msg->data[7]
-            );
+    memcpy(&num, s, 4);
+    num = ntohl(num);
+    memcpy(&msg->ident, s+4, 4);
+    msg->ident = ntohl(msg->ident);
+    msg->RemoteFlag = *(s+8);
+    msg->DLC = *(s+9);
+    for (int i = 0; i < 8; i++)
+        msg->data[i] = *(s+10+i);
 
+    if ((n+1) != num) {
+        total ++;
+        printf("miss total %d(%d)", total, num);
+    }
 
     return ret;
 }
