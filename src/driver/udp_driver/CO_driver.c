@@ -34,6 +34,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "rtapi.h"
+
 //#define SERVER_ADDR   "127.0.0.1"
 #define SERVER_ADDR   "192.168.89.48"
 #define SERVER_PORT   19048
@@ -262,9 +264,8 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     CO_logMessage((const CanMsg*) buffer);
 #endif
 
-    //printf("%d %s",n, s);
     if(n != len){
-        printf("send %d %d %d\n", n, len, errno);
+        rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: send %d %d %d\n", n, len, errno);
         CO_errorReport((CO_EM_t*)CANmodule->em, CO_EM_CAN_TX_OVERFLOW, CO_EMC_CAN_OVERRUN, n);
         err = CO_ERROR_TX_OVERFLOW;
     }
@@ -363,7 +364,7 @@ static int recvMsg(CO_CANmodule_t *CANmodule, CO_CANrxMsg_t *msg) {
 
     if ((n+1) != num) {
         total ++;
-        printf("miss total %d(%d)", total, num);
+        rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: miss total %d(%d)\n", total, num);
     }
 
     return ret;

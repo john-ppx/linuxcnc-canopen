@@ -328,7 +328,7 @@ static void* rt_thread(void* arg) {
             OD_performance[ODA_performance_timerCycleTime] = TMR_TASK_INTERVAL_NS/1000; /* informative */
 
 
-            rtapi_print_msg(RTAPI_MSG_ERR, "(nodeId=0x%02X) - starting.\n\n", nodeId);
+            rtapi_print_msg(RTAPI_MSG_INFO, "(nodeId=0x%02X) - starting.\n\n", nodeId);
 
             if(CO_command_init() != 0) {
                 CO_errExit("Socket command interface initialization failed");
