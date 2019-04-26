@@ -252,7 +252,7 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer){
     *(s+9) = buffer->DLC;
     for (int i = 0; i < 8; i++)
         *(s+10+i) = buffer->data[i];
-    len = 17;
+    len = 18;
 
     n = send(CANmodule->sockfd, s, len, 0);
     //n = sendto(CANmodule->sockfd, s, len, 0,

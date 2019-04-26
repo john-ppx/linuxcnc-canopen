@@ -151,7 +151,7 @@ int rtapi_app_main(void) {
         r = -EINVAL;goto APP_EXIT;
     }
 
-    rtPriority = 10;
+    //rtPriority = 10;
     /* Set priority for rt_thread */
     if(rtPriority > 0) {
         struct sched_param param;
@@ -363,6 +363,7 @@ static void* rt_thread(void* arg) {
 
                 /* Detect timer large overflow */
                 if(OD_performance[ODA_performance_timerCycleMaxTime] > TMR_TASK_OVERFLOW_US && rtPriority > 0) {
+                    rtapi_print_msg(RTAPI_MSG_ERR, "timeout %x %x\n", CO_EM_ISR_TIMER_OVERFLOW, CO_EMC_SOFTWARE_INTERNAL);
                     CO_errorReport(CO->em, CO_EM_ISR_TIMER_OVERFLOW, CO_EMC_SOFTWARE_INTERNAL,
                             0x22400000L | OD_performance[ODA_performance_timerCycleMaxTime]);
                 }
