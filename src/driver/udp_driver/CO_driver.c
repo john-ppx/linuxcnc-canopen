@@ -365,8 +365,8 @@ static int recvMsg(CO_CANmodule_t *CANmodule, CO_CANrxMsg_t *msg) {
     if ((n+1) != num) {
         total ++;
         rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: miss total %d(%d)\n", total, num);
-        n = num;
     }
+    n = num;
 
     return ret;
 }
