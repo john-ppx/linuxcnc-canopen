@@ -15,7 +15,9 @@ addf canopen.write servo-thread
 	# E-Stop
 unlinkp iocontrol.0.user-enable-out
 unlinkp iocontrol.0.emc-enable-in
-net eStop iocontrol.0.user-enable-out => iocontrol.0.emc-enable-in
+net estop-out <= iocontrol.0.user-enable-out
+net estop-out => iocontrol.0.emc-enable-in
+net estop-out => canopen.estop
 #net eStop iocontrol.0.user-enable-out => mb002.0.estop
 #net eStop iocontrol.0.emc-enable-in <= mb002.0.estop
 

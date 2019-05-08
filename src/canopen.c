@@ -21,6 +21,8 @@
 static int comp_id;
 
 struct __canopen_state {
+    hal_bit_t *estop;
+
     hal_bit_t *spindle_enable;
     hal_bit_t *spindle_dir;
     hal_float_t *spindle_speed;
@@ -61,6 +63,9 @@ static int export(char *prefix) {
     if (canopen_inst == 0)
         return 1;
 
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->estop),
+            comp_id, "%s.estop", prefix);
+    if(r != 0) return r;
     r = hal_pin_float_newf(HAL_IN, &(canopen_inst->spindle_speed),
             comp_id, "%s.spindle_rpm", prefix);
     if(r != 0) return r;
@@ -256,6 +261,12 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
             OD_readInput8Bit[0] |= 0x02; 
         } else {
             OD_readInput8Bit[0] &=~0x02; 
+        }
+
+        if (*(node->estop)) {
+            OD_readInput8Bit[0] |= 0x04; 
+        } else {
+            OD_readInput8Bit[0] &=~0x04; 
         }
 
         OD_spindleRpm = *(node->spindle_speed);
