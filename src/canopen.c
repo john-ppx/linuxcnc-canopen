@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 
 #include <sys/epoll.h>
@@ -198,6 +199,8 @@ void rtapi_app_exit(void) {
 void CO_errExit(char* msg) {
     perror(msg);
     rtapi_app_exit();
+    //hal_exit(comp_id);
+    exit(1);
 }
 
 /* send CANopen generic emergency message */
@@ -327,8 +330,9 @@ static void* rt_thread(void* arg) {
             firstRun = false;
             /* Configure epoll for mainline */
             mainline_epoll_fd = epoll_create(4);
-            if(mainline_epoll_fd == -1)
+            if(mainline_epoll_fd == -1) {
                 CO_errExit("Program init - epoll_create mainline failed");
+            }
 
             /* Init mainline */
             taskMain_init(mainline_epoll_fd, &OD_performance[ODA_performance_mainCycleMaxTime]);
