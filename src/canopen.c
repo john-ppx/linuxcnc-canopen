@@ -106,6 +106,7 @@ static char                *odStorFile_eeprom = "od_storage_auto";  /* Name of t
 static int nodeId = -1;                /* Use value from Object Dictionary or set to 1..127 by arguments */
 volatile sig_atomic_t CO_endProgram = 0;
 volatile uint16_t           CO_timer1ms = 0U;
+static uint8_t canTimerOn = 0;
 //static int default_count=1, count=0;
 //char *names[16] = {0,};
 //RTAPI_MP_INT(count, "number of ddt");
@@ -151,6 +152,7 @@ int rtapi_app_main(void) {
         r = -EINVAL;goto APP_EXIT;
     }
 
+    canTimerOn = 0;
     /* Create rt_thread */
     if(pthread_create(&rt_thread_id, NULL, rt_thread, NULL) != 0) {
         rtapi_print_msg(RTAPI_MSG_ERR, "Program init - rt_thread creation failed");
@@ -224,6 +226,11 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         period_ms = period / 1000000;
         period_us = period / 1000;
     }
+    
+    if (canTimerOn == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: (read)Initializing\n");
+        return;
+    }
 
     CO_timer1ms += period_ms;
 
@@ -251,6 +258,10 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         period_us = period / 1000;
     }
 
+    if (canTimerOn == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "CANOPEN: (write)Initializing\n");
+        return;
+    }
 
     CO_LOCK_OD();
     if(CO->CANmodule[0]->CANnormal) {
@@ -301,6 +312,7 @@ static void* rt_thread(void* arg) {
 
         pthread_mutex_lock(&CO_CAN_VALID_mtx);
 
+        canTimerOn = 0;
         /* Enter CAN configuration. */
         CO_CANsetConfigurationMode(0);
 
@@ -311,6 +323,7 @@ static void* rt_thread(void* arg) {
             CO_errExit(s);
         }
 
+        canTimerOn = 1;
         /* initialize OD objects 1010 and 1011 and verify errors. */
         CO_OD_configure(CO->SDO[0], OD_H1010_STORE_PARAM_FUNC, CO_ODF_1010, (void*)&odStor, 0, 0U);
         CO_OD_configure(CO->SDO[0], OD_H1011_REST_PARAM_FUNC, CO_ODF_1011, (void*)&odStor, 0, 0U);
