@@ -33,10 +33,14 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 
 #include "rtapi.h"
 
 //#define SERVER_ADDR   "127.0.0.1"
+
+#define INTERFAXENAME "eth0"
+#define CLIENT_ADDR   "192.168.89.32"
 #define SERVER_ADDR   "192.168.89.48"
 #define SERVER_PORT   19048
 
@@ -125,6 +129,18 @@ CO_ReturnError_t CO_CANmodule_init(
             perror("socket failed");
             return CO_ERROR_ILLEGAL_ARGUMENT;
         }
+        
+        struct ifreq interface;
+        strncpy(interface.ifr_ifrn.ifrn_name, INTERFAXENAME, sizeof(INTERFAXENAME));
+        if (setsockopt(CANmodule->sockfd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&interface, sizeof(interface))  < 0) {
+            perror("SO_BINDTODEVICE failed");
+        }
+        // Bind to a specific network interface (and optionally a specific local port)
+        //struct sockaddr_in localaddr;
+        //localaddr.sin_family = AF_INET;
+        //localaddr.sin_addr.s_addr = inet_addr(CLIENT_ADDR);
+        //localaddr.sin_port = 0;  // Any local port will do
+        //bind(CANmodule->sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
         
         /*2 准备通信地址*/
         CANmodule->addr.sin_family = AF_INET;
