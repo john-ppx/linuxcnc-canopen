@@ -19,8 +19,17 @@
 
 #include "CO_command.h"
 
+#define N_AXIS    3
+
 static int comp_id;
 
+struct __axis_data {
+    hal_float_t *pos_cmd;
+
+    hal_bit_t  *pos_limt;
+    hal_bit_t  *neg_limt;
+    hal_bit_t  *home_sw;
+};
 struct __canopen_state {
     hal_bit_t *estop;
 
@@ -28,10 +37,8 @@ struct __canopen_state {
     hal_bit_t *spindle_dir;
     hal_float_t *spindle_speed;
 
-    hal_float_t *xpos_cmd;
-    hal_float_t *ypos_cmd;
-    hal_float_t *zpos_cmd;
-            
+    struct __axis_data axis[N_AXIS];
+
     bool_t syncWas;
 };
 
@@ -58,7 +65,7 @@ pthread_mutex_t             CO_CAN_VALID_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static int export(char *prefix) {
     char buf[HAL_NAME_LEN + 1];
-    int r = 0;
+    int r = 0, i;
 
     canopen_inst = hal_malloc(sizeof(struct __canopen_state));
     if (canopen_inst == 0)
@@ -77,15 +84,20 @@ static int export(char *prefix) {
             comp_id, "%s.spindle_dir", prefix);
     if(r != 0) return r;
 
-    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->xpos_cmd),
-            comp_id, "%s.xpos-cmd", prefix);
-    if(r != 0) return r;
-    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->ypos_cmd),
-            comp_id, "%s.ypos-cmd", prefix);
-    if(r != 0) return r;
-    r = hal_pin_float_newf(HAL_IN, &(canopen_inst->zpos_cmd),
-            comp_id, "%s.zpos-cmd", prefix);
-    if(r != 0) return r;
+    for (i = 0; i < N_AXIS; i++) {
+        r = hal_pin_float_newf(HAL_IN, &(canopen_inst->axis[i].pos_cmd),
+                comp_id, "%s.%d.pos-cmd", prefix, i);
+        if(r != 0) return r;
+        r = hal_pin_bit_newf(HAL_OUT, &(canopen_inst->axis[i].pos_limt),
+                comp_id, "%s.%d.pos-limt", prefix, i);
+        if(r != 0) return r;
+        r = hal_pin_bit_newf(HAL_OUT, &(canopen_inst->axis[i].neg_limt),
+                comp_id, "%s.%d.neg-limt", prefix, i);
+        if(r != 0) return r;
+        r = hal_pin_bit_newf(HAL_OUT, &(canopen_inst->axis[i].home_sw),
+                comp_id, "%s.%d.home-sw", prefix, i);
+        if(r != 0) return r;
+    }
 
     rtapi_snprintf(buf, sizeof(buf), "%s.read", prefix);
     r = hal_export_funct(buf, _read, canopen_inst, 1, 0, comp_id);
@@ -241,7 +253,53 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         node->syncWas = CO_process_SYNC_RPDO(CO, period_us);
 
         /* Further I/O or nonblocking application code may go here. */
+        if(OD_writeOutput8Bit[0]&0x01) {
+            *(node->axis[0].pos_limt) = 1;
+        } else {
+            *(node->axis[0].pos_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[0]&0x02) {
+            *(node->axis[0].neg_limt) = 1;
+        } else {
+            *(node->axis[0].neg_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[0]&0x04) {
+            *(node->axis[0].home_sw) = 1;
+        } else {
+            *(node->axis[0].home_sw) = 0;
+        }
 
+        if(OD_writeOutput8Bit[0]&0x10) {
+            *(node->axis[1].pos_limt) = 1;
+        } else {
+            *(node->axis[1].pos_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[0]&0x20) {
+            *(node->axis[1].neg_limt) = 1;
+        } else {
+            *(node->axis[1].neg_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[0]&0x40) {
+            *(node->axis[1].home_sw) = 1;
+        } else {
+            *(node->axis[1].home_sw) = 0;
+        }
+
+        if(OD_writeOutput8Bit[1]&0x01) {
+            *(node->axis[2].pos_limt) = 1;
+        } else {
+            *(node->axis[2].pos_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[1]&0x02) {
+            *(node->axis[2].neg_limt) = 1;
+        } else {
+            *(node->axis[2].neg_limt) = 0;
+        }
+        if(OD_writeOutput8Bit[1]&0x04) {
+            *(node->axis[2].home_sw) = 1;
+        } else {
+            *(node->axis[2].home_sw) = 0;
+        }
     }
 
     /* Unlock */
@@ -284,9 +342,9 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         }
 
         OD_spindleRpm = *(node->spindle_speed);
-        OD_XPositionCmd = *(node->xpos_cmd);
-        OD_YPositionCmd = *(node->ypos_cmd);
-        OD_ZPositionCmd = *(node->zpos_cmd);
+        OD_XPositionCmd = *(node->axis[0].pos_cmd);
+        OD_YPositionCmd = *(node->axis[1].pos_cmd);
+        OD_ZPositionCmd = *(node->axis[2].pos_cmd);
 
         /* Write outputs */
         CO_process_TPDO(CO, node->syncWas, period_us);
