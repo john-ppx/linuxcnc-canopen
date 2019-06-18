@@ -264,41 +264,39 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
             *(node->axis[0].neg_limt) = 0;
         }
         if(OD_writeOutput8Bit[0]&0x04) {
-            *(node->axis[0].home_sw) = 1;
-        } else {
-            *(node->axis[0].home_sw) = 0;
-        }
-
-        if(OD_writeOutput8Bit[0]&0x10) {
             *(node->axis[1].pos_limt) = 1;
         } else {
             *(node->axis[1].pos_limt) = 0;
         }
-        if(OD_writeOutput8Bit[0]&0x20) {
+        if(OD_writeOutput8Bit[0]&0x08) {
             *(node->axis[1].neg_limt) = 1;
         } else {
             *(node->axis[1].neg_limt) = 0;
         }
-        if(OD_writeOutput8Bit[0]&0x40) {
-            *(node->axis[1].home_sw) = 1;
-        } else {
-            *(node->axis[1].home_sw) = 0;
-        }
-
-        if(OD_writeOutput8Bit[1]&0x01) {
+        if(OD_writeOutput8Bit[0]&0x10) {
             *(node->axis[2].pos_limt) = 1;
         } else {
             *(node->axis[2].pos_limt) = 0;
         }
-        if(OD_writeOutput8Bit[1]&0x02) {
+        if(OD_writeOutput8Bit[0]&0x20) {
             *(node->axis[2].neg_limt) = 1;
         } else {
             *(node->axis[2].neg_limt) = 0;
         }
-        if(OD_writeOutput8Bit[1]&0x04) {
+        if(OD_writeOutput8Bit[0]&0x40) {
             *(node->axis[2].home_sw) = 1;
         } else {
             *(node->axis[2].home_sw) = 0;
+        }
+        if(OD_writeOutput8Bit[0]&0x80) {
+            *(node->axis[1].home_sw) = 1;
+        } else {
+            *(node->axis[1].home_sw) = 0;
+        }
+        if(OD_writeOutput8Bit[1]&0x01) {
+            *(node->axis[0].home_sw) = 1;
+        } else {
+            *(node->axis[0].home_sw) = 0;
         }
     }
 
