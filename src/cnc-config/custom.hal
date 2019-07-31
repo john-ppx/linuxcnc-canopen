@@ -69,11 +69,11 @@ net spindle-cmd-rpm => canopen.spindle_rpm
 
 	# Coolant flood
 unlinkp iocontrol.0.coolant-flood
-#net flood arduino.coolantFlood <= iocontrol.0.coolant-flood
+#net flood <= iocontrol.0.coolant-flood
 
 	# Coolant mist
 unlinkp iocontrol.0.coolant-mist
-#net mist arduino.coolantMist <= iocontrol.0.coolant-mist
+#net mist <= iocontrol.0.coolant-mist
 
 
 ###############################################################################

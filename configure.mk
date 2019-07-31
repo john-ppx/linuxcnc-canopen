@@ -25,6 +25,7 @@ configure:
 	@echo "RTLIBDIR = $(RTLIBDIR)"
 	@echo "LIBDIR = $(LIBDIR)"
 	@echo "prefix = $(prefix)"
+	@echo "ULFLAGS = $(ULFLAGS)"
 
 # include modinc
 MODINC=$(shell $(COMP) --print-modinc)

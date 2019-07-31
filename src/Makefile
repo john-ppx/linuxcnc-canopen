@@ -11,6 +11,9 @@ all:
 install:
 	@$(MAKE) -f $(DRIVER)/user.mk install
 
+pkg:
+	tar -acf linuxcnc-canopen.tgz cnc-config canopen.so
+
 clean:
 	rm -f *.so *.ko *.o
 	rm -f *.sym *.tmp *.ver
