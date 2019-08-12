@@ -31,12 +31,19 @@ addf motion-controller servo-thread
 #setp pwmgen.0.offset 0.114285714286
 #setp pwmgen.0.dither-pwm true
 net spindle-cmd-rpm     <= spindle.0.speed-out
-#net spindle-cmd-rpm-abs <= spindle.0.speed-out-abs
-#net spindle-cmd-rps     <= spindle.0.speed-out-rps
-#net spindle-cmd-rps-abs <= spindle.0.speed-out-rps-abs
-#net spindle-at-speed    => spindle.0.at-speed
+net spindle-cmd-rpm-abs <= spindle.0.speed-out-abs
+net spindle-cmd-rps     <= spindle.0.speed-out-rps
+net spindle-cmd-rps-abs <= spindle.0.speed-out-rps-abs
+net spindle-at-speed    => spindle.0.at-speed
 net spindle-cw <= spindle.0.forward
 net spindle-on <= spindle.0.on
+
+#add by gl
+unlinkp iocontrol.0.coolant-flood
+net arduino.coolantFlood <= iocontrol.0.coolant-flood
+unlinkp iocontrol.0.coolant-mist
+net arduino.coolantMist <= iocontrol.0.coolant-mist
+
 
 #net estop-out       => parport.0.pin-01-out
 #net xstep           => parport.0.pin-02-out

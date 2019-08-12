@@ -68,14 +68,14 @@ net spindle-cw => canopen.spindle_dir
 net spindle-cmd-rpm => canopen.spindle_rpm
 
 	# Coolant flood
-unlinkp iocontrol.0.coolant-flood
-#net flood <= iocontrol.0.coolant-flood
+#add by gl
+net arduino.coolantFlood => canopen.coolant_flood
 
 	# Coolant mist
-unlinkp iocontrol.0.coolant-mist
-#net mist <= iocontrol.0.coolant-mist
 
-
+#net mist arduino.coolantMist <= iocontrol.0.coolant-mist
+net arduino.coolantMist => canopen.coolant_mist
+#over
 ###############################################################################
 ##### Now on to the axies, if you don't have a given axis comment out the #####
 ##### related section entirely. If you don't, EMC will crash on load.     #####

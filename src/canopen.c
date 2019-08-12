@@ -37,6 +37,10 @@ struct __canopen_state {
     hal_bit_t *spindle_dir;
     hal_float_t *spindle_speed;
 
+//all by gl
+    hal_bit_t *coolant_flood;
+    hal_bit_t *coolant_mist;
+
     struct __axis_data axis[N_AXIS];
 
     bool_t syncWas;
@@ -83,6 +87,18 @@ static int export(char *prefix) {
     r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->spindle_dir),
             comp_id, "%s.spindle_dir", prefix);
     if(r != 0) return r;
+
+
+// add by gl
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->coolant_flood),
+            comp_id, "%s.coolant_flood", prefix);
+    if(r != 0) return r;
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->coolant_mist),
+            comp_id, "%s.coolant_mist", prefix);
+    if(r != 0) return r;
+
+//over
 
     for (i = 0; i < N_AXIS; i++) {
         r = hal_pin_float_newf(HAL_IN, &(canopen_inst->axis[i].pos_cmd),
@@ -298,6 +314,7 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         } else {
             *(node->axis[0].home_sw) = 0;
         }
+		
     }
 
     /* Unlock */
@@ -339,6 +356,19 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
             OD_readInput8Bit[0] &=~0x04; 
         }
 
+//all by gl
+        if (*(node->coolant_flood)) {
+            OD_readInput8Bit[0] |= 0x08; 
+        } else {
+            OD_readInput8Bit[0] &=~0x08; 
+        }
+
+	if (*(node->coolant_mist)) {
+	   OD_readInput8Bit[0] |= 0x10; 
+	} else {
+	   OD_readInput8Bit[0] &=~0x10; 
+	}
+//over
         OD_spindleRpm = *(node->spindle_speed);
         OD_XPositionCmd = *(node->axis[0].pos_cmd);
         OD_YPositionCmd = *(node->axis[1].pos_cmd);
