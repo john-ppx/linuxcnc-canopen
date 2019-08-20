@@ -40,7 +40,9 @@ struct __canopen_state {
 //all by gl
     hal_bit_t *coolant_flood;
     hal_bit_t *coolant_mist;
-
+	
+    hal_bit_t *probe_z;
+	
     struct __axis_data axis[N_AXIS];
 
     bool_t syncWas;
@@ -52,7 +54,6 @@ static void _read(void *inst, long period);
 static void _write(void *inst, long period);
 static void* rt_thread(void* arg);
 static pthread_t            rt_thread_id;
-
 pthread_mutex_t             CO_CAN_VALID_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 #define TMR_TASK_INTERVAL_NS    (1000000)       /* Interval of taskTmr in nanoseconds */
@@ -96,8 +97,11 @@ static int export(char *prefix) {
 
     r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->coolant_mist),
             comp_id, "%s.coolant_mist", prefix);
-    if(r != 0) return r;
 
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->probe_z),
+            comp_id, "%s.probe_z", prefix);
+	
+    if(r != 0) return r;
 //over
 
     for (i = 0; i < N_AXIS; i++) {
@@ -294,7 +298,7 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         } else {
             *(node->axis[2].pos_limt) = 0;
         }
-        if(OD_writeOutput8Bit[0]&0x20) {
+        if((OD_writeOutput8Bit[1]&0x04)||(OD_writeOutput8Bit[0]&0x20)) {
             *(node->axis[2].neg_limt) = 1;
         } else {
             *(node->axis[2].neg_limt) = 0;
@@ -314,7 +318,16 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         } else {
             *(node->axis[0].home_sw) = 0;
         }
-		
+
+//WangXianCheng		
+      if(OD_writeOutput8Bit[1]&0x02) {
+	 * (node->probe_z) = 1;
+       	}
+       else {
+	 * (node->probe_z) = 0;
+       	}
+//end 
+
     }
 
     /* Unlock */
@@ -356,19 +369,18 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
             OD_readInput8Bit[0] &=~0x04; 
         }
 
-//all by gl
-        if (*(node->coolant_flood)) {
+       if (*(node->coolant_flood)) {
             OD_readInput8Bit[0] |= 0x08; 
         } else {
             OD_readInput8Bit[0] &=~0x08; 
         }
 
 	if (*(node->coolant_mist)) {
-	   OD_readInput8Bit[0] |= 0x10; 
+	   OD_readInput8Bit[0] |= 0x10;
 	} else {
 	   OD_readInput8Bit[0] &=~0x10; 
 	}
-//over
+
         OD_spindleRpm = *(node->spindle_speed);
         OD_XPositionCmd = *(node->axis[0].pos_cmd);
         OD_YPositionCmd = *(node->axis[1].pos_cmd);

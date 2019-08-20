@@ -43,9 +43,8 @@ unlinkp iocontrol.0.coolant-flood
 net arduino.coolantFlood <= iocontrol.0.coolant-flood
 unlinkp iocontrol.0.coolant-mist
 net arduino.coolantMist <= iocontrol.0.coolant-mist
+net arduino.probe => motion.probe-input
 
-
-#net estop-out       => parport.0.pin-01-out
 #net xstep           => parport.0.pin-02-out
 #setp parport.0.pin-02-out-reset 1
 #net xdir            => parport.0.pin-03-out

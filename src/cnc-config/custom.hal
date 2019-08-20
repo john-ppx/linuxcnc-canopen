@@ -76,6 +76,9 @@ net arduino.coolantFlood => canopen.coolant_flood
 #net mist arduino.coolantMist <= iocontrol.0.coolant-mist
 net arduino.coolantMist => canopen.coolant_mist
 #over
+
+net arduino.probe <=  canopen.probe_z
+
 ###############################################################################
 ##### Now on to the axies, if you don't have a given axis comment out the #####
 ##### related section entirely. If you don't, EMC will crash on load.     #####
@@ -230,4 +233,3 @@ net zpos-cmd joint.2.motor-pos-cmd => canopen.2.pos-cmd
 
 #unlinkp axis.7.motor-pos-cmd
 #net wpos-cmd axis.8.motor-pos-cmd => arduino.axis8-cmd
-
