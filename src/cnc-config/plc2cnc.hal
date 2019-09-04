@@ -69,6 +69,7 @@ net arduino.probe => motion.probe-input
 #setp stepgen.0.maxaccel [JOINT_0]STEPGEN_MAXACCEL
 #net xpos-cmd joint.0.motor-pos-cmd => stepgen.0.position-cmd
 #net xpos-fb stepgen.0.position-fb => joint.0.motor-pos-fb
+#gl
 net xpos-cmd <= joint.0.motor-pos-cmd => joint.0.motor-pos-fb
 #net xstep <= stepgen.0.step
 #net xdir <= stepgen.0.dir

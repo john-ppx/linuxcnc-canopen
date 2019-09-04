@@ -60,8 +60,8 @@
    FILE INFO:
       FileName:     linuxcnc-canopen
       FileVersion:  0.2
-      CreationTime: 08:04:16
-      CreationDate: 2019-03-29
+      CreationTime: 13:57:54
+      CreationDate: 2019-09-04
       CreatedBy:    John
 *******************************************************************************/
 
@@ -91,7 +91,7 @@
 /*******************************************************************************
    OBJECT DICTIONARY
 *******************************************************************************/
-   #define CO_OD_NoOfElements             69
+   #define CO_OD_NoOfElements             71
 
 
 /*******************************************************************************
@@ -231,6 +231,8 @@ struct sCO_OD_RAM{
 /*6200      */ UNSIGNED8      writeOutput8Bit[8];
 /*6401      */ INTEGER16      readAnalogueInput16Bit[12];
 /*6411      */ INTEGER16      writeAnalogueOutput16Bit[8];
+/*7000      */ UNSIGNED32     wheel_scale;
+/*7001      */ UNSIGNED32     wheel_pos;
 
                UNSIGNED32     LastWord;
 };
@@ -476,6 +478,12 @@ extern struct sCO_OD_ROM CO_OD_ROM;
 /*6411, Data Type: INTEGER16, Array[8] */
       #define OD_writeAnalogueOutput16Bit                CO_OD_RAM.writeAnalogueOutput16Bit
       #define ODL_writeAnalogueOutput16Bit_arrayLength   8
+
+/*7000, Data Type: UNSIGNED32 */
+      #define OD_wheel_scale                             CO_OD_RAM.wheel_scale
+
+/*7001, Data Type: UNSIGNED32 */
+      #define OD_wheel_pos                               CO_OD_RAM.wheel_pos
 
 
 #endif

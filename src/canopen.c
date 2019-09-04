@@ -37,12 +37,29 @@ struct __canopen_state {
     hal_bit_t *spindle_dir;
     hal_float_t *spindle_speed;
 
-//all by gl
+//add by gl
     hal_bit_t *coolant_flood;
     hal_bit_t *coolant_mist;
 	
     hal_bit_t *probe_z;
-	
+
+    hal_bit_t *probe_z_alarm;
+//end
+
+    hal_bit_t *axis_x_jog_enable;	
+    hal_bit_t *axis_y_jog_enable;	 
+    hal_bit_t *axis_z_jog_enable;
+//add by gl wheel
+
+    hal_u32_t * wheel_scale;
+    hal_s32_t * wheel_pos;
+
+    hal_bit_t *wheel_scale_0;
+    hal_bit_t *wheel_scale_1;
+
+    hal_bit_t *wheel_pos_0;
+    hal_bit_t *wheel_pos_1;
+//end
     struct __axis_data axis[N_AXIS];
 
     bool_t syncWas;
@@ -67,6 +84,7 @@ pthread_mutex_t             CO_CAN_VALID_mtx = PTHREAD_MUTEX_INITIALIZER;
 #define true (1)
 #undef false
 #define false (0)
+bool test_flag = 0;
 
 static int export(char *prefix) {
     char buf[HAL_NAME_LEN + 1];
@@ -97,12 +115,53 @@ static int export(char *prefix) {
 
     r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->coolant_mist),
             comp_id, "%s.coolant_mist", prefix);
+    if(r != 0) return r;
 
     r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->probe_z),
-            comp_id, "%s.probe_z", prefix);
-	
+            comp_id, "%s.probe_z", prefix);	
     if(r != 0) return r;
-//over
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->probe_z_alarm),
+	    comp_id, "%s.probe_z_alarm", prefix);	
+    if(r != 0) return r;
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->axis_x_jog_enable),
+	    comp_id, "%s.axis_x_jog_enable", prefix);
+    if(r != 0) return r;
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->axis_y_jog_enable),
+	    comp_id, "%s.axis_y_jog_enable", prefix);	
+    if(r != 0) return r;
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->axis_z_jog_enable),
+	    comp_id, "%s.axis_z_jog_enable", prefix);	
+    if(r != 0) return r;
+//end
+    r = hal_pin_u32_newf(HAL_IN, &(canopen_inst->wheel_scale),
+	    comp_id, "%s.wheel_scale", prefix);	
+    if(r != 0) return r;
+	
+    r = hal_pin_s32_newf(HAL_IN, &(canopen_inst->wheel_pos),
+	    comp_id, "%s.wheel_pos", prefix);	
+    if(r != 0) return r;
+	
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->wheel_scale_0),
+	    comp_id, "%s.wheel_scale_0", prefix);	
+    if(r != 0) return r;
+	
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->wheel_scale_1),
+	    comp_id, "%s.wheel_scale_1", prefix);	
+    if(r != 0) return r;	
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->wheel_pos_0),
+	    comp_id, "%s.wheel_pos_0", prefix);	
+    if(r != 0) return r;	
+
+    r = hal_pin_bit_newf(HAL_IN, &(canopen_inst->wheel_pos_1),
+	    comp_id, "%s.wheel_pos_1", prefix);	
+    if(r != 0) return r;	
+
+
 
     for (i = 0; i < N_AXIS; i++) {
         r = hal_pin_float_newf(HAL_IN, &(canopen_inst->axis[i].pos_cmd),
@@ -298,11 +357,11 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         } else {
             *(node->axis[2].pos_limt) = 0;
         }
-        if((OD_writeOutput8Bit[1]&0x04)||(OD_writeOutput8Bit[0]&0x20)) {
+        if(OD_writeOutput8Bit[0]&0x20) {
             *(node->axis[2].neg_limt) = 1;
         } else {
             *(node->axis[2].neg_limt) = 0;
-        }
+        }	
         if(OD_writeOutput8Bit[0]&0x40) {
             *(node->axis[2].home_sw) = 1;
         } else {
@@ -319,15 +378,69 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
             *(node->axis[0].home_sw) = 0;
         }
 
+
 //WangXianCheng		
-      if(OD_writeOutput8Bit[1]&0x02) {
-	 * (node->probe_z) = 1;
-       	}
-       else {
-	 * (node->probe_z) = 0;
+        if(OD_writeOutput8Bit[1]&0x02) {
+	    *(node->probe_z) = 1;
+       	}else {
+	    *(node->probe_z) = 0;
        	}
 //end 
+        if(OD_writeOutput8Bit[1]&0x04) {
+            *(node->probe_z_alarm) = 1;
+        } else {
+            *(node->probe_z_alarm) = 0;
+        }
+        if(OD_writeOutput8Bit[1]&0x08){
+	  	//test_flag  = 1;
+	 }else{
+		//test_flag  = 0;
+	 }
 
+       /*(if(OD_writeOutput8Bit[1]&0x10){
+	    *(node->axis_x_jog_enable) = 1;
+	}else{
+            *(node->axis_x_jog_enable) = 0;
+	}*/
+	 *(node->axis_x_jog_enable) = 1;
+       if(OD_writeOutput8Bit[1]&0x20){
+	    *(node->axis_y_jog_enable) = 1;
+	}else{
+            *(node->axis_y_jog_enable) = 0;
+	}
+       if(OD_writeOutput8Bit[1]&0x40){
+	    *(node->axis_z_jog_enable) = 1;
+	}else{
+            *(node->axis_z_jog_enable) = 0;
+	}
+
+	//test
+	*(node->wheel_scale_0)= 1;
+	*(node->wheel_scale_1)= 0;
+
+	*(node->wheel_pos_0)= 2;
+	*(node->wheel_pos_1)= 1;
+
+
+	
+	if(!test_flag){
+			*(node->wheel_pos)= 10;
+		}
+	else{
+			*(node->wheel_pos)= 50000000;
+		}
+
+	/*if(OD_wheel_pos){
+			*(node->wheel_pos)= 10;
+		}
+	else{
+			*(node->wheel_pos)= 5000;
+		}*/
+
+	//*(node->wheel_pos)= OD_wheel_pos;
+
+	
+	//test end
     }
 
     /* Unlock */
@@ -368,12 +481,20 @@ struct __canopen_state *node = (struct __canopen_state*)inst;
         } else {
             OD_readInput8Bit[0] &=~0x04; 
         }
-
+		
        if (*(node->coolant_flood)) {
             OD_readInput8Bit[0] |= 0x08; 
+			test_flag =1;
         } else {
             OD_readInput8Bit[0] &=~0x08; 
+			test_flag =0;
         }
+
+	/*if (test_flag) {
+		 OD_readInput8Bit[0] |= 0x08; 
+	 } else {
+		 OD_readInput8Bit[0] &=~0x08; 
+	 }*/
 
 	if (*(node->coolant_mist)) {
 	   OD_readInput8Bit[0] |= 0x10;
