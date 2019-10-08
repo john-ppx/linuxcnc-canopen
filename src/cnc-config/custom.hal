@@ -283,8 +283,8 @@ net mpg-scale => axis.y.jog-scale
 net mpg-scale => axis.z.jog-scale
 
 # The MPG inputs
-net mpg-a encoder.0.phase-A <= canopen.wheel_pos_0
-net mpg-b encoder.0.phase-B <= canopen.wheel_pos_1
+#net mpg-a encoder.0.phase-A <= canopen.wheel_pos_0
+#net mpg-b encoder.0.phase-B <= canopen.wheel_pos_1
 
 # The Axis select inputs
 net mpg-x axis.x.jog-enable <= canopen.axis_x_jog_enable
@@ -311,4 +311,4 @@ addf scale.0 servo-thread
 
 net WheelCounts canopen.wheel_pos => ilowpass.0.in 
 net JogCountsLowpass ilowpass.0.out => axis.x.jog-counts  axis.y.jog-counts  axis.z.jog-counts
-#end
+

@@ -407,10 +407,10 @@ mapped object  (subindex 1...8)
 bit  0-7:  data length in bits
 bit 8-15:  subindex from OD
 bit 16-31: index from OD</description>
-      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="2"/>
+      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="3"/>
       <CANopenSubObject subIndex="01" name="mapped object 1" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x62000108"/>
       <CANopenSubObject subIndex="02" name="mapped object 2" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x62000208"/>
-      <CANopenSubObject subIndex="03" name="mapped object 3" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
+      <CANopenSubObject subIndex="03" name="mapped object 3" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x63000020"/>
       <CANopenSubObject subIndex="04" name="mapped object 4" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="05" name="mapped object 5" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="06" name="mapped object 6" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
@@ -420,9 +420,9 @@ bit 16-31: index from OD</description>
     <CANopenObject index="1601" name="RPDO mapping parameter" objectType="9" subNumber="9" memoryType="ROM" accessFunctionName="CO_ODF_RPDOmap">
       <label lang="en">RPDO mapping parameter</label>
       <description lang="en">0x1600 - 0x17FF RPDO mapping parameter (see description for 0x1600)</description>
-      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="0"/>
-      <CANopenSubObject subIndex="01" name="mapped object 1" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
-      <CANopenSubObject subIndex="02" name="mapped object 2" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
+      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="2"/>
+      <CANopenSubObject subIndex="01" name="mapped object 1" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x65000020"/>
+      <CANopenSubObject subIndex="02" name="mapped object 2" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x66000020"/>
       <CANopenSubObject subIndex="03" name="mapped object 3" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="04" name="mapped object 4" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="05" name="mapped object 5" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
@@ -446,9 +446,9 @@ bit 16-31: index from OD</description>
     <CANopenObject index="1603" name="RPDO mapping parameter" objectType="9" subNumber="9" memoryType="ROM" accessFunctionName="CO_ODF_RPDOmap">
       <label lang="en">RPDO mapping parameter</label>
       <description lang="en">0x1600 - 0x17FF RPDO mapping parameter (see description for 0x1600)</description>
-      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="0"/>
-      <CANopenSubObject subIndex="01" name="mapped object 1" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
-      <CANopenSubObject subIndex="02" name="mapped object 2" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
+      <CANopenSubObject subIndex="00" name="Number of mapped objects" objectType="7" dataType="05" accessType="rw" PDOmapping="no" defaultValue="2"/>
+      <CANopenSubObject subIndex="01" name="mapped object 1" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x67000020"/>
+      <CANopenSubObject subIndex="02" name="mapped object 2" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x68000020"/>
       <CANopenSubObject subIndex="03" name="mapped object 3" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="04" name="mapped object 4" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
       <CANopenSubObject subIndex="05" name="mapped object 5" objectType="7" dataType="07" accessType="rw" PDOmapping="no" defaultValue="0x00000000"/>
@@ -2020,6 +2020,19 @@ Trigger time - If integer value passes 'TraceConfig-&gt;threshold', then time is
       <CANopenSubObject subIndex="07" name="Output" objectType="7" defaultValue="0x00"/>
       <CANopenSubObject subIndex="08" name="Output" objectType="7" defaultValue="0x00"/>
     </CANopenObject>
+    <CANopenObject index="6300" name="scope" objectType="7" memoryType="RAM" dataType="08" accessType="rw" PDOmapping="optional" defaultValue="0">
+      <label lang="en">Read input 8 bit</label>
+      <description lang="en">Digital inputs from hardware.</description>
+      <CANopenSubObject subIndex="00" name="max sub-index" objectType="7" dataType="05" accessType="ro" PDOmapping="no" defaultValue="8"/>
+      <CANopenSubObject subIndex="01" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="02" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="03" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="04" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="05" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="06" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="07" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="08" name="Input" objectType="7" defaultValue="0x00"/>
+    </CANopenObject>
     <CANopenObject index="6401" name="Read analogue input 16 bit" objectType="8" subNumber="13" memoryType="RAM" dataType="03" accessType="ro" PDOmapping="optional">
       <label lang="en">Read analogue input 16 bit</label>
       <description lang="en">Analogue inputs from hardware. The integer value is left adjusted.</description>
@@ -2050,9 +2063,61 @@ Trigger time - If integer value passes 'TraceConfig-&gt;threshold', then time is
       <CANopenSubObject subIndex="07" name="Output" objectType="7" defaultValue="0"/>
       <CANopenSubObject subIndex="08" name="Output" objectType="7" defaultValue="0"/>
     </CANopenObject>
+    <CANopenObject index="6500" name="test1" objectType="7" memoryType="RAM" dataType="08" accessType="rw" PDOmapping="optional" defaultValue="0">
+      <label lang="en">Read input 8 bit</label>
+      <description lang="en">Digital inputs from hardware.</description>
+      <CANopenSubObject subIndex="00" name="max sub-index" objectType="7" dataType="05" accessType="ro" PDOmapping="no" defaultValue="8"/>
+      <CANopenSubObject subIndex="01" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="02" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="03" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="04" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="05" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="06" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="07" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="08" name="Input" objectType="7" defaultValue="0x00"/>
+    </CANopenObject>
+    <CANopenObject index="6600" name="test2" objectType="7" memoryType="RAM" dataType="08" accessType="rw" PDOmapping="optional" defaultValue="0">
+      <label lang="en">Read input 8 bit</label>
+      <description lang="en">Digital inputs from hardware.</description>
+      <CANopenSubObject subIndex="00" name="max sub-index" objectType="7" dataType="05" accessType="ro" PDOmapping="no" defaultValue="8"/>
+      <CANopenSubObject subIndex="01" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="02" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="03" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="04" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="05" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="06" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="07" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="08" name="Input" objectType="7" defaultValue="0x00"/>
+    </CANopenObject>
+    <CANopenObject index="6700" name="test3" objectType="7" memoryType="RAM" dataType="08" accessType="rw" PDOmapping="optional" defaultValue="0">
+      <label lang="en">Read input 8 bit</label>
+      <description lang="en">Digital inputs from hardware.</description>
+      <CANopenSubObject subIndex="00" name="max sub-index" objectType="7" dataType="05" accessType="ro" PDOmapping="no" defaultValue="8"/>
+      <CANopenSubObject subIndex="01" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="02" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="03" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="04" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="05" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="06" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="07" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="08" name="Input" objectType="7" defaultValue="0x00"/>
+    </CANopenObject>
+    <CANopenObject index="6800" name="test4" objectType="7" memoryType="RAM" dataType="08" accessType="rw" PDOmapping="optional" defaultValue="0">
+      <label lang="en">Read input 8 bit</label>
+      <description lang="en">Digital inputs from hardware.</description>
+      <CANopenSubObject subIndex="00" name="max sub-index" objectType="7" dataType="05" accessType="ro" PDOmapping="no" defaultValue="8"/>
+      <CANopenSubObject subIndex="01" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="02" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="03" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="04" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="05" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="06" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="07" name="Input" objectType="7" defaultValue="0x00"/>
+      <CANopenSubObject subIndex="08" name="Input" objectType="7" defaultValue="0x00"/>
+    </CANopenObject>
   </CANopenObjectList>
   <other>
-    <file fileName="linuxcnc-canopen" fileCreator="John" fileCreationDate="2019-03-29" fileCreationTime="08:04:16" fileVersion="0.2"/>
+    <file fileName="linuxcnc-canopen" fileCreator="John" fileCreationDate="2019-09-30" fileCreationTime="14:13:01" fileVersion="0.2"/>
     <DeviceIdentity>
       <vendorName>CANopenNode</vendorName>
       <productName>CANopenNode</productName>

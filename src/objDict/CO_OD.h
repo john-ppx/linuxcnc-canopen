@@ -60,8 +60,8 @@
    FILE INFO:
       FileName:     linuxcnc-canopen
       FileVersion:  0.2
-      CreationTime: 13:57:54
-      CreationDate: 2019-09-04
+      CreationTime: 14:13:01
+      CreationDate: 2019-09-30
       CreatedBy:    John
 *******************************************************************************/
 
@@ -91,7 +91,7 @@
 /*******************************************************************************
    OBJECT DICTIONARY
 *******************************************************************************/
-   #define CO_OD_NoOfElements             71
+   #define CO_OD_NoOfElements             74
 
 
 /*******************************************************************************
@@ -229,10 +229,13 @@ struct sCO_OD_RAM{
 /*4003      */ REAL32         ZPositionCmd;
 /*6000      */ UNSIGNED8      readInput8Bit[8];
 /*6200      */ UNSIGNED8      writeOutput8Bit[8];
+/*6300      */ REAL32         scope;
 /*6401      */ INTEGER16      readAnalogueInput16Bit[12];
 /*6411      */ INTEGER16      writeAnalogueOutput16Bit[8];
-/*7000      */ UNSIGNED32     wheel_scale;
-/*7001      */ UNSIGNED32     wheel_pos;
+/*6500      */ REAL32         test1;
+/*6600      */ REAL32         test2;
+/*6700      */ REAL32         test3;
+/*6800      */ REAL32         test4;
 
                UNSIGNED32     LastWord;
 };
@@ -471,6 +474,9 @@ extern struct sCO_OD_ROM CO_OD_ROM;
       #define OD_writeOutput8Bit                         CO_OD_RAM.writeOutput8Bit
       #define ODL_writeOutput8Bit_arrayLength            8
 
+/*6300, Data Type: REAL32 */
+      #define OD_scope                                   CO_OD_RAM.scope
+
 /*6401, Data Type: INTEGER16, Array[12] */
       #define OD_readAnalogueInput16Bit                  CO_OD_RAM.readAnalogueInput16Bit
       #define ODL_readAnalogueInput16Bit_arrayLength     12
@@ -479,11 +485,17 @@ extern struct sCO_OD_ROM CO_OD_ROM;
       #define OD_writeAnalogueOutput16Bit                CO_OD_RAM.writeAnalogueOutput16Bit
       #define ODL_writeAnalogueOutput16Bit_arrayLength   8
 
-/*7000, Data Type: UNSIGNED32 */
-      #define OD_wheel_scale                             CO_OD_RAM.wheel_scale
+/*6500, Data Type: REAL32 */
+      #define OD_test1                                   CO_OD_RAM.test1
 
-/*7001, Data Type: UNSIGNED32 */
-      #define OD_wheel_pos                               CO_OD_RAM.wheel_pos
+/*6600, Data Type: REAL32 */
+      #define OD_test2                                   CO_OD_RAM.test2
+
+/*6700, Data Type: REAL32 */
+      #define OD_test3                                   CO_OD_RAM.test3
+
+/*6800, Data Type: REAL32 */
+      #define OD_test4                                   CO_OD_RAM.test4
 
 
 #endif

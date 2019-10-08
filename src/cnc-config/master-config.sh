@@ -1,8 +1,10 @@
 #!/bin/bash
 
 SDO=./canopencomm
-INIVAR=/home/john/work/linuxcnc/linuxcnc/bin/inivar
+#INIVAR=/home/ac-user/work/test/linuxcnc/bin/inivar
 
+#INIVAR=/usr/bin/inivar
+INIVAR=/home/john/work/linuxcnc/linuxcnc/bin/inivar
 MASTER_ID=32
 SLAVE_ID=48
 
@@ -29,19 +31,27 @@ $SDO $MASTER_ID w 0x1800 1 u32 $[0x00000200+$SLAVE_ID]
 
 $SDO $MASTER_ID w 0x1801 1 u32 $[0x80000280+$MASTER_ID]
 $SDO $MASTER_ID w 0x1801 1 u32 $[0x00000300+$SLAVE_ID]
-$SDO $SLAVE_ID  w 0x1401 2 u8  0
-$SDO $MASTER_ID w 0x1801 2 u8  0
+#$SDO $SLAVE_ID  w 0x1401 2 u8  0
+#$SDO $MASTER_ID w 0x1801 2 u8  0
 
 $SDO $MASTER_ID w 0x1802 1 u32 $[0x80000380+$MASTER_ID]
 $SDO $MASTER_ID w 0x1802 1 u32 $[0x00000400+$SLAVE_ID]
-$SDO $SLAVE_ID  w 0x1402 2 u8  0
-$SDO $MASTER_ID w 0x1802 2 u8  0
+#$SDO $SLAVE_ID  w 0x1402 2 u8  0
+#$SDO $MASTER_ID w 0x1802 2 u8  0
 
 $SDO $SLAVE_ID  w 0x1800 1 u32 $[0x80000180+$SLAVE_ID]
 $SDO $SLAVE_ID  w 0x1800 1 u32 $[0x00000200+$MASTER_ID]
 
+$SDO $SLAVE_ID  w 0x1801 1 u32 $[0x80000280+$SLAVE_ID]
+$SDO $SLAVE_ID  w 0x1801 1 u32 $[0x00000300+$MASTER_ID]
+
+#$SDO $SLAVE_ID  w 0x1802 1 u32 $[0x80000380+$SLAVE_ID]
+#$SDO $SLAVE_ID  w 0x1802 1 u32 $[0x00000400+$MASTER_ID]
+
+$SDO $SLAVE_ID  w 0x1803 1 u32 $[0x80000480+$SLAVE_ID]
+$SDO $SLAVE_ID  w 0x1803 1 u32 $[0x00000500+$MASTER_ID]
 # 复位从站数据,解决不关闭从站,重新打开linuxcnc时轴移动的问题
 $SDO $SLAVE_ID stop
-sleep 1
+sleep 2
 $SDO $SLAVE_ID start
 

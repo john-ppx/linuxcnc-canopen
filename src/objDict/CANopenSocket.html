@@ -98,11 +98,11 @@
               </tr>
               <tr>
                 <th>Creation Time</th>
-                <td>08:04:16</td>
+                <td>14:13:01</td>
               </tr>
               <tr>
                 <th>Creation Date</th>
-                <td>2019-03-29</td>
+                <td>2019-09-30</td>
               </tr>
               <tr>
                 <th>Created By</th>
@@ -738,7 +738,7 @@
           <ul>
             <li>
               00 - Number of mapped objects:
-              <input addr="1600000001" format="U08" pf="rw" value="2"/>
+              <input addr="1600000001" format="U08" pf="rw" value="3"/>
             </li>
             <li>
               01 - mapped object 1:
@@ -750,7 +750,7 @@
             </li>
             <li>
               03 - mapped object 3:
-              <input addr="1600030004" format="X32" pf="rw" value="0x00000000"/>
+              <input addr="1600030004" format="X32" pf="rw" value="0x63000020"/>
             </li>
             <li>
               04 - mapped object 4:
@@ -779,15 +779,15 @@
           <ul>
             <li>
               00 - Number of mapped objects:
-              <input addr="1601000001" format="U08" pf="rw" value="0"/>
+              <input addr="1601000001" format="U08" pf="rw" value="2"/>
             </li>
             <li>
               01 - mapped object 1:
-              <input addr="1601010004" format="X32" pf="rw" value="0x00000000"/>
+              <input addr="1601010004" format="X32" pf="rw" value="0x65000020"/>
             </li>
             <li>
               02 - mapped object 2:
-              <input addr="1601020004" format="X32" pf="rw" value="0x00000000"/>
+              <input addr="1601020004" format="X32" pf="rw" value="0x66000020"/>
             </li>
             <li>
               03 - mapped object 3:
@@ -861,15 +861,15 @@
           <ul>
             <li>
               00 - Number of mapped objects:
-              <input addr="1603000001" format="U08" pf="rw" value="0"/>
+              <input addr="1603000001" format="U08" pf="rw" value="2"/>
             </li>
             <li>
               01 - mapped object 1:
-              <input addr="1603010004" format="X32" pf="rw" value="0x00000000"/>
+              <input addr="1603010004" format="X32" pf="rw" value="0x67000020"/>
             </li>
             <li>
               02 - mapped object 2:
-              <input addr="1603020004" format="X32" pf="rw" value="0x00000000"/>
+              <input addr="1603020004" format="X32" pf="rw" value="0x68000020"/>
             </li>
             <li>
               03 - mapped object 3:
@@ -2041,6 +2041,11 @@
             </li>
           </ul>
         </li>
+        <li>
+          <a docref="linuxcnc-canopen_6300">6300</a>
+          - scope:
+          <input addr="6300000004" format="R32" pf="rrw" value="0"/>
+        </li>
         <li class="expandable">
           <a docref="linuxcnc-canopen_6401">6401 - Read analogue input 16 bit</a>
           <ul>
@@ -2138,6 +2143,26 @@
               <input addr="6411080002" format="I16" pf="rrw" value="0"/>
             </li>
           </ul>
+        </li>
+        <li>
+          <a docref="linuxcnc-canopen_6500">6500</a>
+          - test1:
+          <input addr="6500000004" format="R32" pf="rrw" value="0"/>
+        </li>
+        <li>
+          <a docref="linuxcnc-canopen_6600">6600</a>
+          - test2:
+          <input addr="6600000004" format="R32" pf="rrw" value="0"/>
+        </li>
+        <li>
+          <a docref="linuxcnc-canopen_6700">6700</a>
+          - test3:
+          <input addr="6700000004" format="R32" pf="rrw" value="0"/>
+        </li>
+        <li>
+          <a docref="linuxcnc-canopen_6800">6800</a>
+          - test4:
+          <input addr="6800000004" format="R32" pf="rrw" value="0"/>
         </li>
       </ul>
     </li>
@@ -3548,7 +3573,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>2</td>
+          <td>3</td>
           <td/>
         </tr>
         <tr>
@@ -3578,7 +3603,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0x00000000</td>
+          <td>0x63000020</td>
           <td/>
         </tr>
         <tr>
@@ -3683,7 +3708,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0</td>
+          <td>2</td>
           <td/>
         </tr>
         <tr>
@@ -3693,7 +3718,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0x00000000</td>
+          <td>0x65000020</td>
           <td/>
         </tr>
         <tr>
@@ -3703,7 +3728,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0x00000000</td>
+          <td>0x66000020</td>
           <td/>
         </tr>
         <tr>
@@ -3927,7 +3952,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0</td>
+          <td>2</td>
           <td/>
         </tr>
         <tr>
@@ -3937,7 +3962,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0x00000000</td>
+          <td>0x67000020</td>
           <td/>
         </tr>
         <tr>
@@ -3947,7 +3972,7 @@
           <td>rw</td>
           <td>no</td>
           <td>no</td>
-          <td>0x00000000</td>
+          <td>0x68000020</td>
           <td/>
         </tr>
         <tr>
@@ -7440,6 +7465,35 @@
         <div>Digital outputs on hardware.</div>
       </div>
     </li>
+    <li id="linuxcnc-canopen_6300">
+      <h3>6300 - scope</h3>
+      <table>
+        <tr>
+          <th>Object Type</th>
+          <th>Memory Type</th>
+          <th>Data Type</th>
+          <th>Access Type</th>
+          <th>PDO Mapping</th>
+          <th>TPDO detects COS</th>
+          <th>Default value</th>
+          <th>Actual value</th>
+        </tr>
+        <tr>
+          <td>Var</td>
+          <td>RAM</td>
+          <td>REAL32</td>
+          <td>rw</td>
+          <td>optional</td>
+          <td>no</td>
+          <td>0</td>
+          <td/>
+        </tr>
+      </table>
+      <div class="description lang_en">
+        <h4>en: Read input 8 bit</h4>
+        <div>Digital inputs from hardware.</div>
+      </div>
+    </li>
     <li id="linuxcnc-canopen_6401">
       <h3>6401 - Read analogue input 16 bit</h3>
       <table>
@@ -7642,6 +7696,122 @@
       <div class="description lang_en">
         <h4>en: Write analogue output 16 bit</h4>
         <div>Analogue outputs on hardware. The integer value is left adjusted.</div>
+      </div>
+    </li>
+    <li id="linuxcnc-canopen_6500">
+      <h3>6500 - test1</h3>
+      <table>
+        <tr>
+          <th>Object Type</th>
+          <th>Memory Type</th>
+          <th>Data Type</th>
+          <th>Access Type</th>
+          <th>PDO Mapping</th>
+          <th>TPDO detects COS</th>
+          <th>Default value</th>
+          <th>Actual value</th>
+        </tr>
+        <tr>
+          <td>Var</td>
+          <td>RAM</td>
+          <td>REAL32</td>
+          <td>rw</td>
+          <td>optional</td>
+          <td>no</td>
+          <td>0</td>
+          <td/>
+        </tr>
+      </table>
+      <div class="description lang_en">
+        <h4>en: Read input 8 bit</h4>
+        <div>Digital inputs from hardware.</div>
+      </div>
+    </li>
+    <li id="linuxcnc-canopen_6600">
+      <h3>6600 - test2</h3>
+      <table>
+        <tr>
+          <th>Object Type</th>
+          <th>Memory Type</th>
+          <th>Data Type</th>
+          <th>Access Type</th>
+          <th>PDO Mapping</th>
+          <th>TPDO detects COS</th>
+          <th>Default value</th>
+          <th>Actual value</th>
+        </tr>
+        <tr>
+          <td>Var</td>
+          <td>RAM</td>
+          <td>REAL32</td>
+          <td>rw</td>
+          <td>optional</td>
+          <td>no</td>
+          <td>0</td>
+          <td/>
+        </tr>
+      </table>
+      <div class="description lang_en">
+        <h4>en: Read input 8 bit</h4>
+        <div>Digital inputs from hardware.</div>
+      </div>
+    </li>
+    <li id="linuxcnc-canopen_6700">
+      <h3>6700 - test3</h3>
+      <table>
+        <tr>
+          <th>Object Type</th>
+          <th>Memory Type</th>
+          <th>Data Type</th>
+          <th>Access Type</th>
+          <th>PDO Mapping</th>
+          <th>TPDO detects COS</th>
+          <th>Default value</th>
+          <th>Actual value</th>
+        </tr>
+        <tr>
+          <td>Var</td>
+          <td>RAM</td>
+          <td>REAL32</td>
+          <td>rw</td>
+          <td>optional</td>
+          <td>no</td>
+          <td>0</td>
+          <td/>
+        </tr>
+      </table>
+      <div class="description lang_en">
+        <h4>en: Read input 8 bit</h4>
+        <div>Digital inputs from hardware.</div>
+      </div>
+    </li>
+    <li id="linuxcnc-canopen_6800">
+      <h3>6800 - test4</h3>
+      <table>
+        <tr>
+          <th>Object Type</th>
+          <th>Memory Type</th>
+          <th>Data Type</th>
+          <th>Access Type</th>
+          <th>PDO Mapping</th>
+          <th>TPDO detects COS</th>
+          <th>Default value</th>
+          <th>Actual value</th>
+        </tr>
+        <tr>
+          <td>Var</td>
+          <td>RAM</td>
+          <td>REAL32</td>
+          <td>rw</td>
+          <td>optional</td>
+          <td>no</td>
+          <td>0</td>
+          <td/>
+        </tr>
+      </table>
+      <div class="description lang_en">
+        <h4>en: Read input 8 bit</h4>
+        <div>Digital inputs from hardware.</div>
       </div>
     </li>
   </ul>
